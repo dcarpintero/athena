@@ -1,19 +1,37 @@
-import json
+"""
+Coral is a Python library for generating structured responses using Pydantic, Langchain Expression Language, Cohere's LLM.
+"""
 import logging
 import os
+
+import cohere
+import tomli
 
 from dotenv import load_dotenv
 from langchain.llms import Cohere
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-from pydantic import BaseModel, Field
-from tenacity import retry, stop_after_attempt, wait_random_exponential
-
-import cohere
-import tomli
+from pydantic import (
+    BaseModel,
+    Field,
+    field_validator,
+)
+from tenacity import (
+    retry, 
+    stop_after_attempt, 
+    wait_random_exponential
+)
 
 class Tweet(BaseModel):
     text: str = Field(description="Tweet text")
+
+    @field_validator('text')
+    @classmethod
+    def validate_text(cls, v: str) -> str:
+        if "https://" not in v:
+            logging.error("Tweet does not include a link to the paper!")
+            raise ValueError("Tweet must include a link to the paper!")
+        return v
 
 class Email(BaseModel):
     subject: str = Field(description="Email subject")
@@ -32,8 +50,8 @@ class CohereEngine:
 
         logging.info("Initialized CohereEngine")
 
-    
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(5))
     def generate_tweet(self, summary: str, link: str) -> Tweet:
         """
         Generate an structured Tweet object about a research paper.
@@ -92,6 +110,11 @@ class CohereEngine:
         logging.info("Email generated")
 
         return email
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def summarize(self) -> str:
+        pass
 
 
     def __load_environment_vars(self):
