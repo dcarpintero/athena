@@ -21,7 +21,7 @@ def load_cohere_engine():
 cohere_engine = load_cohere_engine()
 
 def main():
-    st.title("🦉 Athena - Your Research Companion")
+    st.title("🦉 Athena - Research Companion")
 
     # Create tabs
     tab_tldr, tab_contributions, tab_chat, tab_email, tab_citations, tab_smiliar, tab_tweet = st.tabs(["📝 TL;DR",
@@ -44,9 +44,7 @@ def main():
         st.write("This is a chat section")
 
     with tab_email:
-        st.header("Email Authors")
-
-        sender = "James Smith"
+        sender = "Athena"
         institution = "Latent University"
         receivers = ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"]
         paper = "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
@@ -54,7 +52,7 @@ def main():
 
         email = cohere_engine.generate_email(sender, institution, receivers, paper, topic)
 
-        st.write(email.subject)
+        st.subheader(email.subject)
         st.write(email.body)
 
 
@@ -67,8 +65,6 @@ def main():
         st.write("This is a similar papers section")
 
     with tab_tweet:
-        st.header("Tweet")
-
         summary = """
             The paper's main contribution is its demonstration of the effectiveness of attention mechanisms in NLP tasks. 
             Attention mechanisms allow neural networks to selectively focus on specific parts of the input sequence, 
@@ -78,6 +74,7 @@ def main():
         link = "https://arxiv.org/abs/1706.03762"
         tweet = cohere_engine.generate_tweet(summary, link)
 
+        st.subheader("Tweet")
         st.write(tweet.text)
 
 
