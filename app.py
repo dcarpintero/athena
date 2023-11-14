@@ -21,6 +21,13 @@ def load_cohere_engine():
 cohere_engine = load_cohere_engine()
 
 
+@st.cache_data()
+def summarize_paper(id: str):
+    summary = cohere_engine.summarize_arxiv(id).summary
+    return summary
+
+
+@st.cache_data()
 def generate_tweet():
     summary = """The paper's main contribution is its demonstration of the effectiveness of attention mechanisms in NLP tasks.
                  Attention mechanisms allow neural networks to selectively focus on specific parts of the input sequence, 
@@ -91,7 +98,8 @@ def main():
                                                                                                        "📣 Tweet"])
     with tab_tldr:
         st.header("TL;DR")
-        summary = cohere_engine.summarize_arxiv("1706.03762").summary
+
+        summary = summarize_paper(id="1706.03762")
         st.write(summary)
 
     with tab_contributions:
@@ -119,9 +127,9 @@ def main():
         st.write("This is a similar papers section")
 
     with tab_tweet:
-        tweet = generate_tweet()
-
         st.subheader("Tweet")
+
+        tweet = generate_tweet()
         st.write(tweet.text)
 
 
