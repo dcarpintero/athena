@@ -113,8 +113,16 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def summarize(self) -> str:
-        pass
+    def summarize(self, text: str) -> str:
+        response = self.cohere.summarize(
+            model='command',
+            text = text,
+            length='auto',
+            format='bullets',
+            extractiveness='auto',
+            temperature=0.3,
+        )
+        return response
 
 
     def __load_environment_vars(self):
