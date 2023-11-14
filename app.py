@@ -103,11 +103,14 @@ def main():
                                                                                                        "📣 Tweet"])
     with tab_tldr:
         st.subheader("TL;DR")
-        st.write(summarize(metadata))
 
-        st.subheader("Keywords")
-        st.write(extract_keywords(metadata))
+        try:    
+            st.write(summarize(metadata))
 
+            st.subheader("Keywords")
+            st.write(extract_keywords(metadata))
+        except Exception as e:
+            st.error(f"Error summarizing paper: {e}")
 
     with tab_contributions:
         st.header("Contributions")
@@ -119,10 +122,13 @@ def main():
         st.write("This is a chat section")
 
     with tab_email:
-        email = generate_email(metadata)
+        try:
+            email = generate_email(metadata)
 
-        st.subheader(email.subject)
-        st.write(email.body)
+            st.subheader(email.subject)
+            st.write(email.body)
+        except Exception as e:
+            st.error(f"Error generating email: {e}")
 
 
     with tab_citations:
@@ -136,8 +142,11 @@ def main():
     with tab_tweet:
         st.subheader("Tweet")
 
-        tweet = generate_tweet(metadata)
-        st.write(tweet.text)
+        try:
+            tweet = generate_tweet(metadata)
+            st.write(tweet.text)
+        except Exception as e:
+            st.error(f"Error generating tweet: {e}")
 
 
 if __name__ == "__main__":
