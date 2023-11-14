@@ -1,0 +1,4 @@
+cohere==4.34.0
+python-dotenv==1.0.0
+streamlit==1.28.2
+tenacity==8.2.3
