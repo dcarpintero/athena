@@ -20,6 +20,26 @@ def load_cohere_engine():
 
 cohere_engine = load_cohere_engine()
 
+
+def generate_tweet():
+    summary = """The paper's main contribution is its demonstration of the effectiveness of attention mechanisms in NLP tasks.
+                 Attention mechanisms allow neural networks to selectively focus on specific parts of the input sequence, 
+                 enabling the model to capture long-term dependencies and contextual relationships between words in a sentence. 
+                 This is particularly important for NLP tasks, where the meaning of a sentence is often influenced by the surrounding words and the overall context."""
+    link = "https://arxiv.org/abs/1706.03762"
+    return cohere_engine.generate_tweet(summary, link)
+
+
+def generate_email():
+    sender = "Athena"
+    institution = "Latent University"
+    receivers = ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"]
+    paper = "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+    topic = "Natural Language Processing"
+
+    return cohere_engine.generate_email(sender, institution, receivers, paper, topic)
+
+
 def main():
     st.title("🦉 Athena - Research Companion")
 
@@ -44,13 +64,7 @@ def main():
         st.write("This is a chat section")
 
     with tab_email:
-        sender = "Athena"
-        institution = "Latent University"
-        receivers = ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"]
-        paper = "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
-        topic = "Natural Language Processing"
-
-        email = cohere_engine.generate_email(sender, institution, receivers, paper, topic)
+        email = generate_email()
 
         st.subheader(email.subject)
         st.write(email.body)
@@ -65,14 +79,7 @@ def main():
         st.write("This is a similar papers section")
 
     with tab_tweet:
-        summary = """
-            The paper's main contribution is its demonstration of the effectiveness of attention mechanisms in NLP tasks. 
-            Attention mechanisms allow neural networks to selectively focus on specific parts of the input sequence, 
-            enabling the model to capture long-term dependencies and contextual relationships between words in a sentence. 
-            This is particularly important for NLP tasks, where the meaning of a sentence is often influenced by the surrounding words and the overall context.
-            """
-        link = "https://arxiv.org/abs/1706.03762"
-        tweet = cohere_engine.generate_tweet(summary, link)
+        tweet = generate_tweet()
 
         st.subheader("Tweet")
         st.write(tweet.text)

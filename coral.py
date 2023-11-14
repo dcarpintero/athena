@@ -32,7 +32,7 @@ class CohereEngine:
 
         logging.info("Initialized CohereEngine")
 
-
+    
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def generate_tweet(self, summary: str, link: str) -> Tweet:
         """
