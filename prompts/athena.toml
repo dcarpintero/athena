@@ -2,8 +2,9 @@ title = "Athena Prompt Templates for Cohere Generate API"
 
 [tweet]
 prompt =    """
-            Write an engaging Tweet about this research paper '{summary}'. 
-            A valid response has to include in the tweet some hashtags and this link to the paper: {link}
+            You are a helpful assistant. Your task is to write an engaging Tweet about a research paper, and to include hashtags, and this link {link}.
+            The research paper is about '{summary}'.
+            Make sure to include the given link in the paper.
             Format your response as a JSON dictionary as in the following example:
     
             EXAMPLE:
