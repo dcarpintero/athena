@@ -2,14 +2,15 @@ title = "Athena Prompt Templates for Cohere Generate API"
 
 [tweet]
 prompt =    """
-            Write a Tweet about this research paper '{summary}'. Include hashtags and the link to the paper in the tweet: {link}
+            Write an engaging Tweet about this research paper '{summary}'. 
+            A valid response has to include in the tweet some hashtags and this link to the paper: {link}
             Format your response as a JSON dictionary as in the following example:
     
             EXAMPLE:
             {{
                 "text" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
                           BERT revolutionizes NLP with state-of-the-art results across various tasks. \
-                          Read more: [https://arxiv.org/abs/1810.04805] #AI #NLP #MachineLearning 🤖💬",
+                          Read more: https://arxiv.org/abs/1810.04805 #AI #NLP #MachineLearning 🤖💬",
             }} 
             
             ---
