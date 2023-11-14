@@ -79,7 +79,7 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def generate_email(self, sender, institution, receivers, paper, topic) -> Email:     
+    def generate_email(self, sender: str, institution: str, receivers: list, paper: str, topic: str) -> Email:     
         """
         Generate an structured Email object to the authors of a research paper.
         Under the hood it uses Cohere's LLM, a custom Pydantic Email Model, and Langchain Expression Language with Templates.
