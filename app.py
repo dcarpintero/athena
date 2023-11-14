@@ -18,42 +18,44 @@ def load_cohere_engine():
         st.error(f'Cohere Engine Error {e}')
         st.stop()
 
+@st.cache_data()
+def load_arxiv_paper(id: str):
+    metadata, content = cohere_engine.load_arxiv_paper(id)
+    return metadata, content
+
+
+@st.cache_data()
+def summarize(metadata: dict):
+    return cohere_engine.summarize(text = metadata['Summary'])
+
+
+@st.cache_data()
+def extract_keywords(metadata: dict):
+    return cohere_engine.extract_keywords(text = metadata['Summary'])
+
+
+@st.cache_data()
+def generate_tweet(metadata: dict):
+    return cohere_engine.generate_tweet(summary = metadata['Summary'], 
+                                        link = metadata['entry_id'])
+
+
+def generate_email(metadata: dict):
+    return cohere_engine.generate_email(sender ="Athena", 
+                                        institution = "Latent Univeristy", 
+                                        receivers = metadata['Authors'], 
+                                        title = metadata['Title'], 
+                                        topic = "Machine Learning")
+
 cohere_engine = load_cohere_engine()
-
-
-@st.cache_data()
-def summarize_paper(id: str):
-    summary = cohere_engine.summarize_arxiv(id).summary
-    return summary
-
-
-@st.cache_data()
-def generate_tweet():
-    summary = """The paper's main contribution is its demonstration of the effectiveness of attention mechanisms in NLP tasks.
-                 Attention mechanisms allow neural networks to selectively focus on specific parts of the input sequence, 
-                 enabling the model to capture long-term dependencies and contextual relationships between words in a sentence. 
-                 This is particularly important for NLP tasks, where the meaning of a sentence is often influenced by the surrounding words and the overall context."""
-    link = "https://arxiv.org/abs/1706.03762"
-    return cohere_engine.generate_tweet(summary, link)
-
-
-def generate_email():
-    sender = "Athena"
-    institution = "Latent University"
-    receivers = ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"]
-    paper = "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
-    topic = "Natural Language Processing"
-
-    return cohere_engine.generate_email(sender, institution, receivers, paper, topic)
-
 
 # -----------------------------------------------------------------------------
 # Sidebar Section
 # -----------------------------------------------------------------------------
 
 with st.sidebar.expander("📚 RESEARCH", expanded=True):
-    query = st.text_input("Query", "1706.03762", help="Search Topic or Paper ID")
-    arxiv = st.checkbox("Arxiv", value=True, key="arxiv", help="Search in Arxiv")
+    arxiv_id = st.text_input("Paper", "1706.03762", help="Paper ID")
+    arxiv_mode = st.checkbox("Arxiv", value=True, key="arxiv", help="Search in Arxiv")
 
 
 with st.sidebar.expander("🤖 COHERE-SETTINGS", expanded=True):
@@ -85,6 +87,9 @@ with st.sidebar:
         "[![Weaviate](https://img.shields.io/badge/Weaviate-green)](https://weaviate.io/?ref=https://github.com/dcarpintero)"
 
 
+metadata, content = load_arxiv_paper(arxiv_id)
+
+# -----------------------------------------------------------------------------
 def main():
     st.title("🦉 Athena - Research Companion")
 
@@ -97,10 +102,12 @@ def main():
                                                                                                        "🔎 Similar Papers",
                                                                                                        "📣 Tweet"])
     with tab_tldr:
-        st.header("TL;DR")
+        st.subheader("TL;DR")
+        st.write(summarize(metadata))
 
-        summary = summarize_paper(id="1706.03762")
-        st.write(summary)
+        st.subheader("Keywords")
+        st.write(extract_keywords(metadata))
+
 
     with tab_contributions:
         st.header("Contributions")
@@ -112,7 +119,7 @@ def main():
         st.write("This is a chat section")
 
     with tab_email:
-        email = generate_email()
+        email = generate_email(metadata)
 
         st.subheader(email.subject)
         st.write(email.body)
@@ -129,7 +136,7 @@ def main():
     with tab_tweet:
         st.subheader("Tweet")
 
-        tweet = generate_tweet()
+        tweet = generate_tweet(metadata)
         st.write(tweet.text)
 
 

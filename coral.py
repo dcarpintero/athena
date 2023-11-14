@@ -89,7 +89,7 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def generate_email(self, sender: str, institution: str, receivers: list, paper: str, topic: str) -> Email:     
+    def generate_email(self, sender: str, institution: str, receivers: list, title: str, topic: str) -> Email:     
         """
         Generate an structured Email object to the authors of a research paper.
         Under the hood it uses Cohere's LLM, a custom Pydantic Email Model, and Langchain Expression Language with Templates.
@@ -98,12 +98,10 @@ class CohereEngine:
         - sender (str): Name of the sender
         - institution (str): Institution of the sender
         - receivers (list): Names of the receivers
-        - paper (str): Title of the research paper
+        - title (str): Title of the research paper
         - topic (str): Topic of the research paper
         """
         logging.info("Generating email...")
-
-        receivers = ', '.join(receivers[:-1]) + ' and ' + receivers[-1]
 
         model = Cohere(model='command', temperature=0.1, max_tokens=500)
         prompt = PromptTemplate.from_template(self.templates['email']['prompt'])
@@ -113,64 +111,57 @@ class CohereEngine:
         email = email_chain.invoke({"sender": sender, 
                                     "institution": institution, 
                                     "receivers": receivers, 
-                                    "paper": paper, 
+                                    "title": title, 
                                     "topic": topic})
         
         logging.debug(email)
         logging.info("Email generated")
-
         return email
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def summarize_arxiv(self, query: str) -> str:
-        docs = ArxivLoader(query=query, load_max_docs=1).load()
-        metadata = docs[0].metadata
-        content = docs[0].page_content
+    def summarize(self, text: str) -> str:
+        logging.info("Summarizing text...")
 
         response = self.cohere.summarize(
-            model='command',
-            text = content,
-            length='auto',
-            format='bullets',
-            extractiveness='auto',
-            temperature=0.3,
-        )
-        return response
-    
-
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def contributions_arxiv(self, query: str) -> str:
-        docs = ArxivLoader(query=query, load_max_docs=1).load()
-        metadata = docs[0].metadata
-        content = docs[0].page_content
-
-        prompt = f"What are the contributions of this paper? {content}"
-    
-        response = self.cohere.generate(
-            model='command',
-            prompt=prompt,
-            max_tokens=500,
-            temperature=0.1,
-            k=0,
-            stop_sequences=[],
-            return_likelihoods='NONE')
-        
-        return response
-    
-
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def summarize_with_chat(self, text: str) -> str:
-        response = self.cohere.summarize(
-            model='command',
             text = text,
             length='auto',
             format='bullets',
-            extractiveness='auto',
-            temperature=0.3,
+            model='command',
+            additional_command='',
+            temperature=0.8,
         )
-        return response
 
+        logging.info("Text summarized")
+        return response.summary
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def extract_keywords(self, text: str) -> str:
+        logging.info("Extracting keywords...")
+
+        response = self.cohere.generate(
+            model='command',
+            prompt=self.templates['keywords']['prompt'].format(text=text),
+            max_tokens=300,
+            temperature=0.9,
+            k=0,
+            stop_sequences=[],
+            return_likelihoods='NONE'
+        )
+
+        logging.info("Keywords extracted")
+        return response.generations[0].text
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def load_arxiv_paper(self, paper_id: str) -> (dict, str):
+        docs = ArxivLoader(query=paper_id, load_max_docs=2, load_all_available_meta=True).load()
+        metadata = docs[0].metadata
+        content = docs[0].page_content
+
+        return metadata, content
+    
 
     def __load_environment_vars(self):
         """

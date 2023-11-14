@@ -1,4 +1,4 @@
-title = "Athena Prompt Templates for Cohere Generate API"
+title = "Athena Prompt Templates for Cohere's API"
 
 [tweet]
 prompt =    """
@@ -20,7 +20,7 @@ prompt =    """
 [email]
 prompt =    """
             Create a JSON-formatted response for a professional cold email. The email is from myself, {sender}, a researcher at {institution}, \
-            addressed to {receivers}, authors of the research paper '{paper}'. The email should express respect for their work, \
+            addressed to {receivers}, authors of the research paper '{title}'. The email should express respect for their work, \
             briefly introduce my research interests, and inquire about their willingness to collaborate on an upcoming project that aligns with our mutual interests.
 
             EXAMPLE:
@@ -33,4 +33,19 @@ prompt =    """
             }}
 
             ---
+            """
+
+[keywords]
+prompt =    """
+            You are a highly-skilled assistant in Natural Language Processing.
+            Extract the top-10 keywords from the given abstract of a research paper. 
+            Format your response as an array as in the following response example:
+
+            EXAMPLE:
+            ["music", "generation", "global musical attribute", "mood", "tempo", "time-varying attribute", "diffusion-based", "Uni-ControlNet"]
+            
+            ---
+            
+            INPUT:
+            {text}
             """
