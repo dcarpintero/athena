@@ -3,9 +3,11 @@ import logging
 import os
 
 from dotenv import load_dotenv
+from langchain.prompts import PromptTemplate
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 import cohere
+import tomli
 
 class CohereEngine:
     """
@@ -16,6 +18,7 @@ class CohereEngine:
                             format="%(asctime)s [%(levelname)s] %(message)s")
         self.vars = self.__load_environment_vars()
         self.cohere = self.__cohere_client(self.vars["COHERE_API_KEY"])
+        self.templates = self.__load_prompt_templates()
 
         logging.info("Initialized CohereEngine")
 
@@ -32,19 +35,9 @@ class CohereEngine:
         Returns:
         - dict: Tweet and link to the research paper as a JSON dictionary
         """
-        prompt = f"""
-            Write a short Tweet about this research paper '{summary}'. Include hashtags and the link to the paper in the tweet: {link}
-            Format your response as a JSON dictionary as in the following example:
-    
-            EXAMPLE:
-            {{
-                "tweet" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
-                           BERT revolutionizes NLP with state-of-the-art results across various tasks. \
-                           Read more: [https://arxiv.org/abs/1810.04805] #AI #NLP #MachineLearning 🤖💬",
-            }} 
-            
-            --
-            """
+        tweet = self.templates['tweet']['prompt']
+        prompt = PromptTemplate.from_template(tweet).format(summary=summary,
+                                                            link=link)
 
         response = self.cohere.generate(
             model='command',
@@ -72,24 +65,15 @@ class CohereEngine:
         - paper (str): Title of the research paper
         - topic (str): Topic of the research paper
         """
-        receivers = ', '.join(receivers[:-1]) + ' and ' + receivers[-1]  
+        receivers = ', '.join(receivers[:-1]) + ' and ' + receivers[-1]
 
-        prompt = f"""
-            Create a JSON-formatted response for a professional cold email. The email is from myself, {sender}, a researcher at {institution}, \
-            addressed to {receivers}, authors of the research paper '{paper}'. The email should express respect for their work, \
-            briefly introduce my research interests, and inquire about their willingness to collaborate on an upcoming project that aligns with our mutual interests.
-
-            EXAMPLE:
-            {{
-                "subject": "Collaboration on {topic} with {institution}"
-                "email": "Dear {receivers},\n\nI hope this message finds you well. My name is {sender}, and I'm a researcher specializing in {topic} at {institution}. \ 
-                          After reading your influential paper, '{topic}', I was deeply impressed by your insights and findings. And I am reaching out to explore the \
-                          possibility of collaborating on a project that I believe could benefit greatly from your expertise. I would be honored to discuss this further \
-                          if you are interested.\n\nLooking forward to the possibility of working together.\n\nBest regards,\n{sender}"
-            }}
-            --
-            """
-        
+        email = self.templates['email']['prompt']
+        prompt = PromptTemplate.from_template(email).format(sender=sender, 
+                                                            institution=institution, 
+                                                            receivers=receivers, 
+                                                            paper=paper, 
+                                                            topic=topic)
+                
         response = self.cohere.generate(
             model='command',
             prompt=prompt,
@@ -119,6 +103,23 @@ class CohereEngine:
         
         logging.info("Environment variables loaded")
         return env_vars
+    
+
+    def __load_prompt_templates(self):
+        """
+        Load prompt templates from prompts/athena.toml
+        """
+        logging.info("Loading prompt templates...")
+
+        try:
+            with open("prompts/athena.toml", "rb") as f:
+                prompts = tomli.load(f)
+        except FileNotFoundError as e:
+            logging.error(e)
+            raise OSError("Prompt templates file not found.")
+        
+        logging.info("Prompt templates loaded")
+        return prompts
     
     
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(5))

@@ -1,0 +1,34 @@
+title = "Athena Prompt Templates for Cohere Generate API"
+
+[tweet]
+prompt =    """
+            Write a Tweet about this research paper '{summary}'. Include hashtags and the link to the paper in the tweet: {link}
+            Format your response as a JSON dictionary as in the following example:
+    
+            EXAMPLE:
+            {{
+                "tweet" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
+                           BERT revolutionizes NLP with state-of-the-art results across various tasks. \
+                           Read more: [https://arxiv.org/abs/1810.04805] #AI #NLP #MachineLearning 🤖💬",
+            }} 
+            
+            ---
+            """
+
+[email]
+prompt =    """
+            Create a JSON-formatted response for a professional cold email. The email is from myself, {sender}, a researcher at {institution}, \
+            addressed to {receivers}, authors of the research paper '{paper}'. The email should express respect for their work, \
+            briefly introduce my research interests, and inquire about their willingness to collaborate on an upcoming project that aligns with our mutual interests.
+
+            EXAMPLE:
+            {{
+                "subject" : "Collaboration on {topic} with {institution}"
+                "email" : "Dear {receivers},\n\nI hope this message finds you well. My name is {sender}, and I'm a researcher specializing in {topic} at {institution}. \ 
+                           After reading your influential paper, '{topic}', I was deeply impressed by your insights and findings. And I am reaching out to explore the \
+                           possibility of collaborating on a project that I believe could benefit greatly from your expertise. I would be honored to discuss this further \
+                           if you are interested.\n\nLooking forward to the possibility of working together.\n\nBest regards,\n{sender}"
+            }}
+
+            ---
+            """
