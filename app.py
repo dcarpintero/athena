@@ -40,6 +40,44 @@ def generate_email():
     return cohere_engine.generate_email(sender, institution, receivers, paper, topic)
 
 
+# -----------------------------------------------------------------------------
+# Sidebar Section
+# -----------------------------------------------------------------------------
+
+with st.sidebar.expander("📚 RESEARCH", expanded=True):
+    query = st.text_input("Query", "1706.03762", help="Search Topic or Paper ID")
+    arxiv = st.checkbox("Arxiv", value=True, key="arxiv", help="Search in Arxiv")
+
+
+with st.sidebar.expander("🤖 COHERE-SETTINGS", expanded=True):
+    gen_model = st.selectbox("Generation Model", [
+                             "command", "command-light", "command-nightly"], key="gen-model", index=0)
+    rank_model = st.selectbox("Rank Model", [
+                              "rerank-multilingual-v2.0", "rerank-english-v2.0"], key="rank-model", index=0)
+    temperature = st.slider('Temperature', min_value=0.0,
+                            max_value=1.0, value=0.30, step=0.05)
+    max_results = st.slider('Max Results', min_value=0,
+                            max_value=15, value=10, step=1)
+    
+
+with st.expander("ℹ️ ABOUT-THIS-APP", expanded=False):
+    st.write("""
+             - Athena is a RAG-Assist protoype powered by *Cohere-AI*, *LangChain* and *Weaviate* to faciliate scientific Research. It provides:
+             - **Advanced Semantic Search**: Outperforms traditional keyword searches with *Cohere's Embed-v3*.
+             - **Human-AI Collaboration**: Enables faster review of research literature, highlights key findings, and augments human understanding
+             - **Admin Support**: Provides assistance with tasks such as categorization of research papers, e-mail drafting, and tweets generation.
+             """)
+
+with st.sidebar:
+    col_gh, col_co, col_we = st.columns([1, 1, 1])
+    with col_gh:
+        "[![Github](https://img.shields.io/badge/Github%20Repo-gray?logo=Github)](https://github.com/dcarpintero/athena)"
+    with col_co:
+        "[![Cohere](https://img.shields.io/badge/Cohere%20LLMs-purple)](https://cohere.com/?ref=https://github.com/dcarpintero)"
+    with col_we:
+        "[![Weaviate](https://img.shields.io/badge/Weaviate-green)](https://weaviate.io/?ref=https://github.com/dcarpintero)"
+
+
 def main():
     st.title("🦉 Athena - Research Companion")
 
@@ -58,18 +96,18 @@ def main():
 
     with tab_contributions:
         st.header("Contributions")
-        st.write("This is a contributions section")
+        # contributions = cohere_engine.contributions_arxiv(query="1706.03762")
+        # st.write(contributions)
 
     with tab_chat:
         st.header("Chat")
         st.write("This is a chat section")
 
     with tab_email:
-        st.subheader("Email")
-        #email = generate_email()
+        email = generate_email()
 
-        #st.subheader(email.subject)
-        #st.write(email.body)
+        st.subheader(email.subject)
+        st.write(email.body)
 
 
     with tab_citations:
@@ -81,11 +119,10 @@ def main():
         st.write("This is a similar papers section")
 
     with tab_tweet:
-        st.subheader("Tweet")
-        #tweet = generate_tweet()
+        tweet = generate_tweet()
 
-        #st.subheader("Tweet")
-        #st.write(tweet.text)
+        st.subheader("Tweet")
+        st.write(tweet.text)
 
 
 if __name__ == "__main__":

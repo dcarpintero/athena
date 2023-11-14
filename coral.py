@@ -140,6 +140,26 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def contributions_arxiv(self, query: str) -> str:
+        docs = ArxivLoader(query=query, load_max_docs=1).load()
+        metadata = docs[0].metadata
+        content = docs[0].page_content
+
+        prompt = f"What are the contributions of this paper? {content}"
+    
+        response = self.cohere.generate(
+            model='command',
+            prompt=prompt,
+            max_tokens=500,
+            temperature=0.1,
+            k=0,
+            stop_sequences=[],
+            return_likelihoods='NONE')
+        
+        return response
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def summarize_with_chat(self, text: str) -> str:
         response = self.cohere.summarize(
             model='command',
