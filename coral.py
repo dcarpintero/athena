@@ -3,11 +3,21 @@ import logging
 import os
 
 from dotenv import load_dotenv
+from langchain.llms import Cohere
+from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
+from pydantic import BaseModel, Field
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 import cohere
 import tomli
+
+class Tweet(BaseModel):
+    text: str = Field(description="Tweet text")
+
+class Email(BaseModel):
+    subject: str = Field(description="Email subject")
+    body: str = Field(description="Email body")
 
 class CohereEngine:
     """
@@ -23,40 +33,38 @@ class CohereEngine:
         logging.info("Initialized CohereEngine")
 
 
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(5))
-    def generate_tweet(self, summary: str, link: str) -> dict:
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def generate_tweet(self, summary: str, link: str) -> Tweet:
         """
-        Generate a Tweet about a research paper using Cohere's command model.
+        Generate an structured Tweet object about a research paper.
+        Under the hood it uses Cohere's LLM, a custom Pydantic Tweet Model, and Langchain Expression Language with Templates.
 
         Parameters:
         - summary (str): Summary of the research paper
         - link (str): Link to the research paper
 
         Returns:
-        - dict: Tweet and link to the research paper as a JSON dictionary
+        - Tweet: Tweet object
         """
-        tweet = self.templates['tweet']['prompt']
-        prompt = PromptTemplate.from_template(tweet).format(summary=summary,
-                                                            link=link)
+        logging.info("Generating tweet...")
 
-        response = self.cohere.generate(
-            model='command',
-            prompt=prompt,
-            max_tokens=150,
-            num_generations=1,
-            temperature=0.3,
-            k=0,
-            stop_sequences=[],
-            return_likelihoods='NONE',
-        )
+        model = Cohere(model='command', temperature=0.3, max_tokens=150)
+        prompt = PromptTemplate.from_template(self.templates['tweet']['prompt'])
+        parser = PydanticOutputParser(pydantic_object=Tweet)
 
-        logging.debug(response)
-        return json.loads(response.generations[0].text)
+        tweet_chain = prompt | model | parser
+        tweet = tweet_chain.invoke({"summary": summary, "link": link})
+
+        logging.debug(tweet)
+        logging.info("Tweet generated")
+        return tweet
     
 
-    def generate_email(self, sender, institution, receivers, paper, topic) -> str:     
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def generate_email(self, sender, institution, receivers, paper, topic) -> Email:     
         """
-        Generate a professional cold email to the authors of a research paper using Cohere's command model.
+        Generate an structured Email object to the authors of a research paper.
+        Under the hood it uses Cohere's LLM, a custom Pydantic Email Model, and Langchain Expression Language with Templates.
 
         Parameters:
         - sender (str): Name of the sender
@@ -65,27 +73,25 @@ class CohereEngine:
         - paper (str): Title of the research paper
         - topic (str): Topic of the research paper
         """
+        logging.info("Generating email...")
+
         receivers = ', '.join(receivers[:-1]) + ' and ' + receivers[-1]
 
-        email = self.templates['email']['prompt']
-        prompt = PromptTemplate.from_template(email).format(sender=sender, 
-                                                            institution=institution, 
-                                                            receivers=receivers, 
-                                                            paper=paper, 
-                                                            topic=topic)
-                
-        response = self.cohere.generate(
-            model='command',
-            prompt=prompt,
-            max_tokens=500,
-            temperature=0.1,
-            k=0,
-            stop_sequences=[],
-            return_likelihoods='NONE'
-        )
+        model = Cohere(model='command', temperature=0.1, max_tokens=500)
+        prompt = PromptTemplate.from_template(self.templates['email']['prompt'])
+        parser = PydanticOutputParser(pydantic_object=Email)
 
-        logging.debug(response.generations[0].text)
-        return response.generations[0].text
+        email_chain = prompt | model | parser
+        email = email_chain.invoke({"sender": sender, 
+                                    "institution": institution, 
+                                    "receivers": receivers, 
+                                    "paper": paper, 
+                                    "topic": topic})
+        
+        logging.debug(email)
+        logging.info("Email generated")
+
+        return email
 
 
     def __load_environment_vars(self):

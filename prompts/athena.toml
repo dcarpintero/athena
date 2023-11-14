@@ -7,9 +7,9 @@ prompt =    """
     
             EXAMPLE:
             {{
-                "tweet" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
-                           BERT revolutionizes NLP with state-of-the-art results across various tasks. \
-                           Read more: [https://arxiv.org/abs/1810.04805] #AI #NLP #MachineLearning 🤖💬",
+                "text" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
+                          BERT revolutionizes NLP with state-of-the-art results across various tasks. \
+                          Read more: [https://arxiv.org/abs/1810.04805] #AI #NLP #MachineLearning 🤖💬",
             }} 
             
             ---
@@ -24,10 +24,10 @@ prompt =    """
             EXAMPLE:
             {{
                 "subject" : "Collaboration on {topic} with {institution}"
-                "email" : "Dear {receivers},\n\nI hope this message finds you well. My name is {sender}, and I'm a researcher specializing in {topic} at {institution}. \ 
-                           After reading your influential paper, '{topic}', I was deeply impressed by your insights and findings. And I am reaching out to explore the \
-                           possibility of collaborating on a project that I believe could benefit greatly from your expertise. I would be honored to discuss this further \
-                           if you are interested.\n\nLooking forward to the possibility of working together.\n\nBest regards,\n{sender}"
+                "body" : "Dear {receivers},\n\nI hope this message finds you well. My name is {sender}, and I'm a researcher specializing in {topic} at {institution}. \ 
+                          After reading your influential paper, '{topic}', I was deeply impressed by your insights and findings. And I am reaching out to explore the \
+                          possibility of collaborating on a project that I believe could benefit greatly from your expertise. I would be honored to discuss this further \
+                          if you are interested.\n\nLooking forward to the possibility of working together.\n\nBest regards,\n{sender}"
             }}
 
             ---

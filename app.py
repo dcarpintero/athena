@@ -54,7 +54,8 @@ def main():
 
         email = cohere_engine.generate_email(sender, institution, receivers, paper, topic)
 
-        st.write(email)
+        st.write(email.subject)
+        st.write(email.body)
 
 
     with tab_citations:
@@ -75,9 +76,9 @@ def main():
             This is particularly important for NLP tasks, where the meaning of a sentence is often influenced by the surrounding words and the overall context.
             """
         link = "https://arxiv.org/abs/1706.03762"
-        response = cohere_engine.generate_tweet(summary, link)
+        tweet = cohere_engine.generate_tweet(summary, link)
 
-        st.write(response["tweet"])
+        st.write(tweet.text)
 
 
 if __name__ == "__main__":
