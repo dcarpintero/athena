@@ -1,28 +1,33 @@
 """
 Coral is a Python library for generating structured responses using Pydantic, Langchain Expression Language, Cohere's LLM.
 """
-import logging
-import os
-
-import cohere
-import tomli
+import logging, os
+import cohere, tomli
 
 from dotenv import load_dotenv
+
+from langchain.document_loaders import ArxivLoader
 from langchain.llms import Cohere
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
+
 from pydantic import (
     BaseModel,
     Field,
     field_validator,
 )
+
 from tenacity import (
     retry, 
     stop_after_attempt, 
     wait_random_exponential
 )
 
+
 class Tweet(BaseModel):
+    """
+    Pydantic Model to generate an structured Tweet with Validation
+    """
     text: str = Field(description="Tweet text")
 
     @field_validator('text')
@@ -33,9 +38,14 @@ class Tweet(BaseModel):
             raise ValueError("Tweet must include a link to the paper!")
         return v
 
+
 class Email(BaseModel):
+    """
+    Pydantic Model to generate an structured Email
+    """
     subject: str = Field(description="Email subject")
     body: str = Field(description="Email body")
+
 
 class CohereEngine:
     """
@@ -113,7 +123,24 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def summarize(self, text: str) -> str:
+    def summarize_arxiv(self, query: str) -> str:
+        docs = ArxivLoader(query=query, load_max_docs=1).load()
+        metadata = docs[0].metadata
+        content = docs[0].page_content
+
+        response = self.cohere.summarize(
+            model='command',
+            text = content,
+            length='auto',
+            format='bullets',
+            extractiveness='auto',
+            temperature=0.3,
+        )
+        return response
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def summarize_with_chat(self, text: str) -> str:
         response = self.cohere.summarize(
             model='command',
             text = text,

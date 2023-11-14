@@ -53,7 +53,8 @@ def main():
                                                                                                        "📣 Tweet"])
     with tab_tldr:
         st.header("TL;DR")
-        st.write("This is a TL;DR section")
+        summary = cohere_engine.summarize_arxiv("1706.03762").summary
+        st.write(summary)
 
     with tab_contributions:
         st.header("Contributions")
@@ -64,10 +65,11 @@ def main():
         st.write("This is a chat section")
 
     with tab_email:
-        email = generate_email()
+        st.subheader("Email")
+        #email = generate_email()
 
-        st.subheader(email.subject)
-        st.write(email.body)
+        #st.subheader(email.subject)
+        #st.write(email.body)
 
 
     with tab_citations:
@@ -79,10 +81,11 @@ def main():
         st.write("This is a similar papers section")
 
     with tab_tweet:
-        tweet = generate_tweet()
-
         st.subheader("Tweet")
-        st.write(tweet.text)
+        #tweet = generate_tweet()
+
+        #st.subheader("Tweet")
+        #st.write(tweet.text)
 
 
 if __name__ == "__main__":
