@@ -29,10 +29,10 @@ prompt =    """
 
 [tweet]
 prompt =    """
-            You are a helpful assistant. Your task is to write an engaging Tweet about a research paper, and to include hashtags and this link {link}.
-            The research paper is about '{summary}'.
-            Make sure to include the given link in the paper.
-            Format your response as a JSON dictionary as in the following example:
+            Write an engaging and informative tweet about a research paper. The research paper delves into '{summary}', exploring groundbreaking insights 
+            and findings. Your tweet should capture the essence of the paper in a way that resonates with a broad audience, sparking interest and curiosity. 
+            Include relevant hashtags that are relevant to the field related to the paper's topic. Additionally, incorporate this link {link} to direct 
+            readers to the full research paper. Structure your response as a JSON dictionary, following this example template:
     
             EXAMPLE:
             {{
