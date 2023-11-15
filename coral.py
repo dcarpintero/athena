@@ -74,7 +74,7 @@ class CohereEngine:
         Returns:
         - Tweet: Tweet object
         """
-        logging.info("Generating tweet...")
+        logging.info("generate_tweet (started)")
 
         model = Cohere(model='command', temperature=0.3, max_tokens=150)
         prompt = PromptTemplate.from_template(self.templates['tweet']['prompt'])
@@ -84,7 +84,7 @@ class CohereEngine:
         tweet = tweet_chain.invoke({"summary": summary, "link": link})
 
         logging.debug(tweet)
-        logging.info("Tweet generated")
+        logging.info("generate_tweet (OK)")
         return tweet
     
 
@@ -101,7 +101,7 @@ class CohereEngine:
         - title (str): Title of the research paper
         - topic (str): Topic of the research paper
         """
-        logging.info("Generating email...")
+        logging.info("generate_email (started)")
 
         model = Cohere(model='command', temperature=0.1, max_tokens=500)
         prompt = PromptTemplate.from_template(self.templates['email']['prompt'])
@@ -114,14 +114,13 @@ class CohereEngine:
                                     "title": title, 
                                     "topic": topic})
         
-        logging.debug(email)
-        logging.info("Email generated")
+        logging.info("generate_email (OK)")
         return email
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def summarize(self, text: str) -> str:
-        logging.info("Summarizing text...")
+        logging.info("summarize (started)")
 
         response = self.cohere.summarize(
             text = text,
@@ -132,25 +131,45 @@ class CohereEngine:
             temperature=0.8,
         )
 
-        logging.info("Text summarized")
+        logging.info("summarize (OK)")
         return response.summary
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def extract_keywords(self, text: str) -> str:
-        logging.info("Extracting keywords...")
+    def enrich_summary(self, text: str) -> str:
+        logging.info("enrich_summary (started)")
 
         response = self.cohere.generate(
             model='command',
             prompt=self.templates['keywords']['prompt'].format(text=text),
-            max_tokens=300,
-            temperature=0.9,
+            max_tokens=4096,
+            temperature=0.3,
             k=0,
             stop_sequences=[],
             return_likelihoods='NONE'
         )
 
-        logging.info("Keywords extracted")
+        logging.info("enrich_summary (OK)")
+        return response.summary
+    
+
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def extract_keywords(self, text: str) -> str:
+        logging.info("extract_keywords (started)")
+
+        response = self.cohere.generate(
+            model='command',
+            prompt=self.templates['keywords']['prompt'].format(text=text),
+            max_tokens=300,
+            temperature=0.3,
+            k=0,
+            stop_sequences=[],
+            return_likelihoods='NONE'
+        )
+
+        logging.info("extract_keywords (OK)")
         return response.generations[0].text
     
 
