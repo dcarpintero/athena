@@ -64,15 +64,30 @@ prompt =    """
 
 [keywords]
 prompt =    """
-            You are a highly-skilled assistant in Natural Language Processing.
-            Extract the top-10 keywords from the given abstract of a research paper. 
-            Format your response as an array as in the following response example:
+            You are a helpful research assistant that will be given a research paper. Your task is to analyze the paper and to identify the most relevant keywords that 
+            capture the core concepts and technologies discussed. For each keyword, provide a brief explanation of its significance in the context of this research. 
+            Focus on terms related to the paper's primary field, including any specific methodologies, technologies, theories, or applications mentioned. 
+            Your explanations should help in understanding the abstract's main contributions and the implications of the research in its respective field.
 
             EXAMPLE:
-            ["music", "generation", "global musical attribute", "mood", "tempo", "time-varying attribute", "diffusion-based", "Uni-ControlNet"]
+            Text: 'The recent advancements in Natural Language Processing (NLP) have been significantly influenced by the introduction of Transformer models. 
+            These models have revolutionized the way machines understand and generate human language. This paper explores the development and application of Transformer 
+            models in various NLP tasks such as machine translation, text summarization, and sentiment analysis. We discuss the underlying architecture of the Transformer,
+            focusing on its unique self-attention mechanism, which allows the model to weigh the importance of different words in a sentence. The paper also examines the 
+            implications of Transformers on future NLP research and their potential to create more human-like AI language systems.'
+
+            keywords: 
+            {
+                "Transformers": "A type of model architecture in AI that has significantly improved the performance of NLP tasks. It is known for its efficiency in processing sequences of data.",
+                "Natural Language Processing": "The field of study that focuses on the interaction between computers and human languages. It involves teaching machines to understand and respond to human text or voice.",
+                "Machine Translation": "An application of NLP where the goal is to automatically translate text or speech from one language to another using machines.",
+                "Text Summarization": "An NLP task where the objective is to condense a larger body of text into a concise summary while retaining key information and meaning.",
+                "Sentiment Analysis": "An NLP process of computationally identifying and categorizing opinions expressed in a piece of text to determine the writer's attitude towards a particular topic.",
+                "Self-Attention Mechanism": "A feature of Transformer models that allows the model to focus on different parts of the input sequence, crucial for understanding the context and relationships within the text."
+            }
             
             ---
             
-            INPUT:
-            {text}
+            TASK:
+            Text: {text}
             """
