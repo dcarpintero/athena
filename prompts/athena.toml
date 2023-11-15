@@ -1,8 +1,35 @@
 title = "Athena Prompt Templates for Cohere's API"
 
+[abstract]
+prompt =    """
+            You are a proficient assistant in Natural Language Processing (NLP). You will be given the abstract of a research paper.
+            Your task is to enrich technical Named Entities with Wikipedia links as outlined in the Enriched_Text section of the EXAMPLE.
+            Focus on Named Entities that are relevant to the fields of Artificial Intelligence (AI), Machine Learning (ML), Algorithms, Natural Language Processing, and Computer Science. 
+            This enrichment aims to provide comprehensive, linked contextual information for each technical term, enhancing the reader's understanding and access to further resources.
+
+            EXAMPLE:
+            Text: 'We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. 
+            Unlike recent language representation models, BERT is designed to pretrain deep bidirectional representations from unlabeled text by jointly 
+            conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be finetuned with just one additional
+            output layer to create state-of-the-art models for a wide range of tasks, such as question answering and language inference, without substantial
+            task specific architecture modifications.'
+
+            Enriched_Text: 
+            ['We introduce a new language representation model called [BERT](https://en.wikipedia.org/wiki/BERT_(language_model)), 
+            which stands for [Bidirectional Encoder Representations from Transformers](https://en.wikipedia.org/wiki/Transformer_(machine_learning_model)). 
+            Unlike recent language representation models, BERT is designed to pretrain deep bidirectional representations from unlabeled text by jointly 
+            conditioning on both left and right context in all layers. As a result, the pre-trained BERT model can be finetuned with just one additional 
+            output layer to create state-of-the-art models for a wide range of tasks, such as [question answering](https://en.wikipedia.org/wiki/Question_answering) 
+            and [language inference](https://en.wikipedia.org/wiki/Natural_language_inference), without substantial task-specific architecture modifications.']
+            --
+
+            TASK:
+            Text: {text}
+            """
+
 [tweet]
 prompt =    """
-            You are a helpful assistant. Your task is to write an engaging Tweet about a research paper, and to include hashtags, and this link {link}.
+            You are a helpful assistant. Your task is to write an engaging Tweet about a research paper, and to include hashtags and this link {link}.
             The research paper is about '{summary}'.
             Make sure to include the given link in the paper.
             Format your response as a JSON dictionary as in the following example:
