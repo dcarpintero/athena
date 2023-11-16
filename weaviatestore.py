@@ -19,14 +19,15 @@ class WeaviateStore:
 
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def query_with_near_text(_w_client: weaviate.Client, query, max_results=10) -> pd.DataFrame:
+    def query_with_near_text(self, query, max_results=10) -> pd.DataFrame:
         """
         Search Arxiv Documents in Weaviate with Near Text.
         Weaviate converts the input query into a vector through the inference API (Cohere) and uses that vector as the basis for a vector search.
         """
+        logging.info(f"query_with_near_text('{query}')")
 
         response = (
-            _w_client.query
+            self.weaviate.query
             .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
             .with_near_text({"concepts": [query]})
             .with_limit(max_results)
@@ -38,7 +39,7 @@ class WeaviateStore:
 
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def query_with_bm25(_w_client: weaviate.Client, query, max_results=10) -> pd.DataFrame:
+    def query_with_bm25(self, query, max_results=10) -> pd.DataFrame:
         """
         Search Arxiv Documents in Weaviate with BM25.
         Keyword (also called a sparse vector search) search that looks for objects that contain the search terms in their properties according to 
@@ -46,7 +47,7 @@ class WeaviateStore:
         """
 
         response = (
-            _w_client.query
+            self.weaviate.query
             .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
             .with_bm25(query=query)
             .with_limit(max_results)
@@ -59,7 +60,7 @@ class WeaviateStore:
 
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def query_with_hybrid(_w_client: weaviate.Client, query, max_results=10) -> pd.DataFrame:
+    def query_with_hybrid(self, query, max_results=10) -> pd.DataFrame:
         """
         Search Arxiv Documents in Weaviate with BM25.
         Keyword (also called a sparse vector search) search that looks for objects that contain the search terms in their properties according to 
@@ -67,7 +68,7 @@ class WeaviateStore:
         """
 
         response = (
-            _w_client.query
+            self.weaviate.query
             .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
             .with_hybrid(query=query)
             .with_limit(max_results)
