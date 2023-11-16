@@ -4,3 +4,4 @@ python-dotenv==1.0.0
 streamlit==1.28.2
 tenacity==8.2.3
 tomli==2.0.1
+weaviate-client==3.25.3
