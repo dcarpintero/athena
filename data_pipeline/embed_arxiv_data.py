@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 BATCH_SIZE = 500
-ARXIV_JSON = "arxiv_cs.CL.json"
-ARXIV_EMBEDDINGS_JSONL = "arxiv_cs.CL_embedv3.jsonl"
+ARXIV_JSON = "data/arxiv_cs.CL.json"
+ARXIV_EMBEDDINGS_JSONL = "data/arxiv_cs.CL_embedv3.jsonl"
 
 def load_json(filename):
     try:

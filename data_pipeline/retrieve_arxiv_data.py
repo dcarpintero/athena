@@ -12,7 +12,7 @@ BASE_URL = "https://export.arxiv.org/api/query?"
 MAX_RESULTS_PER_BATCH = 200
 TOTAL_RESULTS_TO_RETRIEVE = 50000
 NS = {'atom': 'http://www.w3.org/2005/Atom'}
-JSON_FILE = "arxiv_papers.json"
+JSON_FILE = "data/arxiv_papers.json"
 
 
 logging.basicConfig(level=logging.INFO,

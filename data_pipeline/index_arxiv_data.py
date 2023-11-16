@@ -5,7 +5,8 @@ import os
 
 from dotenv import load_dotenv
 
-ARXIV_JSON = "arxiv_cs.CL_mini.json"
+ARXIV_JSON = "data/arxiv_cs.CL.json"
+SCHEMA_NAME = "ArxivDocument_CS_CL"
 
 
 def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
@@ -19,8 +20,8 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
         auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key),
         additional_headers={"X-Cohere-Api-Key": cohere_api_key})
 
-    logging.info(f"Deleting 'ArvixDocument' schema in Weaviate: '{weaviate_url}'")
-    client.schema.delete_class("ArvixDocument")
+    logging.info(f"Deleting '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
+    client.schema.delete_class(SCHEMA_NAME)
 
     """
     Weaviate generates vector embeddings at the object level (rather than for individual properties).
@@ -30,10 +31,10 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
     See: https://weaviate.io/developers/weaviate/config-refs/schema#vectorizer 
     """
 
-    logging.info(f"Creating 'ArvixDocument' schema in Weaviate: '{weaviate_url}'")
-    client.schema.delete_class("ArvixDocument")
+    logging.info(f"Creating '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
+    
     class_obj = {
-        "class": "ArxivDocument",
+        "class": SCHEMA_NAME,
         "description": "This class contains Arxiv Documents in the CS.CL category",
         "vectorIndexType": "hnsw",
         "vectorizer": "text2vec-cohere",
@@ -109,7 +110,7 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
 
                 batch.add_data_object(
                     data_object=properties,
-                    class_name="ArxivDocument")
+                    class_name=SCHEMA_NAME)
     except Exception as ex:
         logging.error(f"Unexpected Error: {ex}")
         raise
