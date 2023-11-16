@@ -33,7 +33,7 @@ class Tweet(BaseModel):
     @field_validator('text')
     @classmethod
     def validate_text(cls, v: str) -> str:
-        if "https://" not in v:
+        if "https://" not in v and "http://" not in v:
             logging.error("Tweet does not include a link to the paper!")
             raise ValueError("Tweet must include a link to the paper!")
         return v
@@ -61,7 +61,23 @@ class CohereEngine:
         logging.info("Initialized CohereEngine")
 
 
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(5))
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def query_llm(self, query: str) -> str:
+        """
+        Query LLM with a custom prompt.
+
+        Parameters:
+        - query (str): Query to be sent to LLM
+
+        Returns:
+        - str: Response from LLM
+        """
+        logging.info("query_llm (started)")
+
+        logging.info("query_llm (OK)")
+        return 
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def generate_tweet(self, summary: str, link: str) -> Tweet:
         """
         Generate an structured Tweet object about a research paper.
@@ -75,15 +91,15 @@ class CohereEngine:
         - Tweet: Tweet object
         """
         logging.info("generate_tweet (started)")
+        logging.info(f"paper: {link}")
 
-        model = Cohere(model='command', temperature=0.3, max_tokens=150)
+        model = Cohere(model='command', temperature=0.3, max_tokens=250)
         prompt = PromptTemplate.from_template(self.templates['tweet']['prompt'])
         parser = PydanticOutputParser(pydantic_object=Tweet)
 
         tweet_chain = prompt | model | parser
         tweet = tweet_chain.invoke({"summary": summary, "link": link})
 
-        logging.debug(tweet)
         logging.info("generate_tweet (OK)")
         return tweet
     
@@ -119,6 +135,52 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def enrich_abstract(self, text: str) -> str:
+        """
+        Identifies technical Named Entities, and enrich them with Wikipedia Links.
+
+        Parameters:
+        - text (str): Text to be enriched
+
+        Returns:
+        - str: Text enriched with Wikipedia links
+        """
+        logging.info("enrich_abstract (started)")
+
+        model = Cohere(model='command', temperature=0.1, max_tokens=4096)
+        prompt = PromptTemplate.from_template(self.templates['abstract']['prompt'])
+
+        abstract_chain = prompt | model
+        abstract = abstract_chain.invoke({"text": text})
+
+        logging.info("enrich_abstract (OK)")
+        return abstract
+    
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def extract_keywords(self, text: str) -> str:
+        """
+        Extract keywords from a research paper. For each keyword, it provides a brief explanation of its significance in the context of this research.
+
+        Parameters:
+        - text (str): Text to extract keywords from
+
+        Returns:
+        - str: Keywords extracted from the text
+        """
+        logging.info("extract_keywords (started)")
+
+        model = Cohere(model='command', temperature=0.1, max_tokens=4096)
+        prompt = PromptTemplate.from_template(self.templates['keywords']['prompt'])
+
+        keywords_chain = prompt | model
+        keywords = keywords_chain.invoke({"text": text})
+
+        logging.info("extract_keywords (OK)")
+        return keywords
+
+
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def summarize(self, text: str) -> str:
         logging.info("summarize (started)")
 
@@ -136,49 +198,23 @@ class CohereEngine:
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def enrich_summary(self, text: str) -> str:
-        logging.info("enrich_summary (started)")
-
-        response = self.cohere.generate(
-            model='command',
-            prompt=self.templates['keywords']['prompt'].format(text=text),
-            max_tokens=4096,
-            temperature=0.3,
-            k=0,
-            stop_sequences=[],
-            return_likelihoods='NONE'
-        )
-
-        logging.info("enrich_summary (OK)")
-        return response.summary
-    
-
-    
-
-    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def extract_keywords(self, text: str) -> str:
-        logging.info("extract_keywords (started)")
-
-        response = self.cohere.generate(
-            model='command',
-            prompt=self.templates['keywords']['prompt'].format(text=text),
-            max_tokens=300,
-            temperature=0.3,
-            k=0,
-            stop_sequences=[],
-            return_likelihoods='NONE'
-        )
-
-        logging.info("extract_keywords (OK)")
-        return response.generations[0].text
+    def embed(self, texts: dict) -> dict:
+        return self.cohere.embed(
+            model='embed-english-v3.0',
+            texts=texts,
+            input_type='search_document',
+        ).embeddings
     
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def load_arxiv_paper(self, paper_id: str) -> (dict, str):
+        logging.info("load_arxiv_paper (started)")
+
         docs = ArxivLoader(query=paper_id, load_max_docs=2, load_all_available_meta=True).load()
         metadata = docs[0].metadata
         content = docs[0].page_content
 
+        logging.info("load_arxiv_paper (OK)")
         return metadata, content
     
 
@@ -186,7 +222,7 @@ class CohereEngine:
         """
         Load environment variables from .env file
         """
-        logging.info("Loading environment variables...")
+        logging.info("load_environment_vars (started)")
 
         load_dotenv()
         required_vars = ["COHERE_API_KEY"]
@@ -195,7 +231,7 @@ class CohereEngine:
             if not value:
                 raise EnvironmentError(f"{var} environment variable not set.")
         
-        logging.info("Environment variables loaded")
+        logging.info("load_environment_vars (OK)")
         return env_vars
     
 
@@ -203,7 +239,7 @@ class CohereEngine:
         """
         Load prompt templates from prompts/athena.toml
         """
-        logging.info("Loading prompt templates...")
+        logging.info("load_prompt_templates (started)")
 
         try:
             with open("prompts/athena.toml", "rb") as f:
@@ -212,7 +248,7 @@ class CohereEngine:
             logging.error(e)
             raise OSError("Prompt templates file not found.")
         
-        logging.info("Prompt templates loaded")
+        logging.info("load_prompt_templates (OK)")
         return prompts
     
     
