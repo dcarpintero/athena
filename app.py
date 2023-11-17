@@ -47,10 +47,12 @@ def enrich_abstract(metadata: dict):
 def extract_keywords(metadata: dict):
     return cohere_engine.extract_keywords(text = metadata['Summary'])
 
+@st.cache_resource()
 def generate_tweet(metadata: dict):
     return cohere_engine.generate_tweet(summary = metadata['Summary'], 
                                         link = metadata['entry_id'])
 
+@st.cache_resource()
 def generate_email(metadata: dict):
     return cohere_engine.generate_email(sender ="Athena", 
                                         institution = "Latent Univeristy", 
@@ -134,7 +136,7 @@ def main():
     with tab_similar:
         st.info(f"ℹ️ These are the most similar Articles from a self-created arXiv dataset of 50k entries in AI, ML and NLP [Powered by Cohere's Embed-v3 and Weaviate]")
         topic = f"{metadata['Title']}:{metadata['Summary']}" 
-        data = search_documents(topic=topic)
+        data = search_documents(topic=topic, max_results=max_results)
 
         col1, col2 = st.columns([1, 1])
         with col1:
@@ -159,7 +161,7 @@ def main():
                               key="user_query_txt", label_visibility="hidden")
         
         if query:
-            data = search_documents(topic=query, max_results=8)
+            data = search_documents(topic=query, max_results=max_results)
             
             col1, col2 = st.columns([1, 1])
             with col1:
