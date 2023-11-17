@@ -35,7 +35,7 @@ Some of our tasks such as enriching abstracts with Wikipedia Links, crafting a g
 - [Prompt Templates](./prompts/athena.toml)
 
 Those prompts are then composed into a LangChain chain as in the following code snippets:
-- [Enrich Abstract]('https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L130-L150')
+- [Enrich Abstract](https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L130-L150)
 - [Keywords](https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L153-L173)
 - [E-mail Drafting w/ JSON Formatting](https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L100-L127)
 - [Tweet Generation w/ JSON Formatting](https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L74-L97) and [Pydantic Validation](https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/coral.py#L17-L28)
@@ -98,6 +98,5 @@ streamlit run ./app.py
 
 - [Arxiv](https://arxiv.org/)
 - [Embed-v3](https://txt.cohere.com/introducing-embed-v3/)
-- [Langchain]()
-- [The Embedding Wikipedia Archives](https://txt.cohere.com/embedding-archives-wikipedia/)
+- [Langchain](https://langchain.com)
 - [Weaviate Vector Search](https://weaviate.io/developers/weaviate/search/similarity/)
