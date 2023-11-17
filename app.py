@@ -86,7 +86,7 @@ with st.sidebar.expander("📁 WEAVIATE-SETTINGS", expanded=True):
 with st.expander("ℹ️ ABOUT-THIS-APP", expanded=False):
     st.write("""
              Athena is a RAG-Assist protoype powered by [Cohere](https://cohere.com/), [LangChain](https://www.langchain.com/) and [Weaviate](https://weaviate.io/) to faciliate scientific Research. It provides:
-             - *Advanced Semantic Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
+             - *Semantic Similarity Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
              - *Human-AI Collaboration*: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
              - *Admin Support*: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
              """)
@@ -118,12 +118,14 @@ def main():
         col1, col2 = st.columns([1, 1])
 
         with col1:
+            st.info(f"ℹ️ This combines Prompt Templates w/ [LangChain Expression Language](https://python.langchain.com/docs/expression_language/).")
             try:
                 st.subheader("Abstract w/ Wikipedia")
                 st.write(enrich_abstract(metadata).replace("Response:", "", 1))
             except Exception as e:
                 st.error(f"enrich_abstract (ERROR): {e}")
         with col2:
+            st.info(f"ℹ️ This combines Prompt Templates w/ [LangChain Expression Language](https://python.langchain.com/docs/expression_language/).")
             try:
                 st.subheader("Glossary of Keywords")
                 st.write(extract_keywords(metadata))
@@ -131,7 +133,7 @@ def main():
                 st.error(f"extract_keywords (ERROR): {e}")
 
     with tab_similar:
-        st.info(f"This demo works with a limited dataset of 50K arXiv articles in AI, ML and NLP")
+        st.info(f"ℹ️ These are the most similar Articles from a self-created arXiv dataset of 50k entries in AI, ML and NLP [Powered by Cohere's Embed-v3 and Weaviate]")
         topic = f"{metadata['Title']}:{metadata['Summary']}" 
         max_results = 10
         data = search_documents(topic=topic, max_results=max_results)
@@ -162,6 +164,7 @@ def main():
             st.success(f"🪄 {data}")
 
     with tab_email:
+        st.info(f"ℹ️ This Task uses [LangChain](https://www.langchain.com/) and [Pydantic](https://docs.pydantic.dev/latest/) to format the generated e-mail in JSON format.")
         try:
             email = generate_email(metadata)
 
@@ -171,7 +174,7 @@ def main():
             st.error(f"generate_email (ERROR): {e}")
 
     with tab_tweet:
-        st.subheader("Tweet")
+        st.info(f"ℹ️ This Task uses [Pydantic](https://docs.pydantic.dev/latest/) to validate that the generated Tweet includes the arXiv link. Invalid responses result in an Error.")
         try:
             tweet = generate_tweet(metadata)
             st.write(tweet.text)
