@@ -24,8 +24,6 @@ class WeaviateStore:
         Search Arxiv Documents in Weaviate with Near Text.
         Weaviate converts the input query into a vector through the inference API (Cohere) and uses that vector as the basis for a vector search.
         """
-        logging.info(f"query_with_near_text('{query}')")
-
         response = (
             self.weaviate.query
             .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
