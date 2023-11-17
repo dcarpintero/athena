@@ -1,3 +1,4 @@
+arxiv==2.0.0
 cohere==4.34.0
 langchain==0.0.335
 python-dotenv==1.0.0
