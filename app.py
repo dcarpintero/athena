@@ -1,5 +1,6 @@
-import streamlit as st
 import coral
+import streamlit as st
+import weaviatestore as ws
 
 st.set_page_config(
     page_title="Athena - Your Research Companion",
@@ -18,15 +19,31 @@ def load_cohere_engine():
         st.error(f'Cohere Engine Error {e}')
         st.stop()
 
+@st.cache_resource(show_spinner=False)
+def load_weaviate_store():
+    try:
+        return ws.WeaviateStore()
+    except (OSError, EnvironmentError) as e:
+        st.error(f'Weaviate Store Error {e}')
+        st.stop()
+
 @st.cache_data()
 def load_arxiv_paper(id: str):
     metadata, content = cohere_engine.load_arxiv_paper(id)
     return metadata, content
 
 
+def search_documents(topic: str):
+    return weaviate_store.query_with_near_text(query=topic)
+
 @st.cache_data()
 def summarize(metadata: dict):
     return cohere_engine.summarize(text = metadata['Summary'])
+
+
+@st.cache_data
+def enrich_abstract(metadata: dict):
+    return cohere_engine.enrich_abstract(text = metadata['Summary'])
 
 
 @st.cache_data()
@@ -47,34 +64,37 @@ def generate_email(metadata: dict):
                                         title = metadata['Title'], 
                                         topic = "Machine Learning")
 
+def query_llm(query: str):
+    return "A random response"
+
 cohere_engine = load_cohere_engine()
+weaviate_store = load_weaviate_store()
 
 # -----------------------------------------------------------------------------
 # Sidebar Section
 # -----------------------------------------------------------------------------
 
-with st.sidebar.expander("📚 RESEARCH", expanded=True):
-    arxiv_id = st.text_input("Paper", "1706.03762", help="Paper ID")
-    arxiv_mode = st.checkbox("Arxiv", value=True, key="arxiv", help="Search in Arxiv")
+st.sidebar.title("🦉 Athena Research")
 
+with st.sidebar.expander("📚 ARXIV", expanded=True):
+    arxiv_id = st.text_input("Article ID", "1706.03762", help="Article Identifier in the cannonical form: YYMM.NNNNN")
 
 with st.sidebar.expander("🤖 COHERE-SETTINGS", expanded=True):
-    gen_model = st.selectbox("Generation Model", [
-                             "command", "command-light", "command-nightly"], key="gen-model", index=0)
-    rank_model = st.selectbox("Rank Model", [
-                              "rerank-multilingual-v2.0", "rerank-english-v2.0"], key="rank-model", index=0)
-    temperature = st.slider('Temperature', min_value=0.0,
-                            max_value=1.0, value=0.30, step=0.05)
-    max_results = st.slider('Max Results', min_value=0,
-                            max_value=15, value=10, step=1)
+    gen_model = st.selectbox("Generation Model", ["command"], key="gen-model", index=0, help="Command is Cohere's default generation model (https://docs.cohere.com/docs/models)")
+    embed_model = st.selectbox("Embeddings Model", ["embedv3"], key="embed-model", index=0, help="Embed v3 is the latest and most advanced embeddings model (https://txt.cohere.com/introducing-embed-v3/)")
+    rank_model = st.selectbox("Rank Model", ["rerank-multilingual-v2.0"], key="rank-model", index=0, help="Allows for re-ranking English language documents.")
+    max_results = st.slider('Max Results', min_value=0, max_value=15, value=10, step=1)
+    
+with st.sidebar.expander("📁 WEAVIATE-SETTINGS", expanded=True):
+    gen_model = st.selectbox("Cluster", ["arxiv.cs.CL.large"], key="cluster", index=0, help="Data collection of 50K arXiv articles in NLP and ML.")
     
 
 with st.expander("ℹ️ ABOUT-THIS-APP", expanded=False):
     st.write("""
-             - Athena is a RAG-Assist protoype powered by *Cohere-AI*, *LangChain* and *Weaviate* to faciliate scientific Research. It provides:
-             - **Advanced Semantic Search**: Outperforms traditional keyword searches with *Cohere's Embed-v3*.
-             - **Human-AI Collaboration**: Enables faster review of research literature, highlights key findings, and augments human understanding
-             - **Admin Support**: Provides assistance with tasks such as categorization of research papers, e-mail drafting, and tweets generation.
+             Athena is a RAG-Assist protoype powered by [Cohere](https://cohere.com/), [LangChain](https://www.langchain.com/) and [Weaviate](https://weaviate.io/) to faciliate scientific Research. It provides:
+             - *Advanced Semantic Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
+             - *Human-AI Collaboration*: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
+             - *Admin Support*: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
              """)
 
 with st.sidebar:
@@ -91,62 +111,58 @@ metadata, content = load_arxiv_paper(arxiv_id)
 
 # -----------------------------------------------------------------------------
 def main():
-    st.title("🦉 Athena - Research Companion")
+    st.info(f"📚 {metadata['Title']}  |  {metadata['Authors']}  |  📅 {metadata['Published']}  |  {metadata['entry_id']}")
 
     # Create tabs
-    tab_tldr, tab_contributions, tab_chat, tab_email, tab_citations, tab_smiliar, tab_tweet = st.tabs(["📝 TL;DR",
-                                                                                                       "🙌 Contributions",
-                                                                                                       "🗨️ Chat",
-                                                                                                       "📬 Email Authors",
-                                                                                                       "📚 Citations",
-                                                                                                       "🔎 Similar Papers",
-                                                                                                       "📣 Tweet"])
+    tab_tldr, tab_chat, tab_email, tab_related, tab_tweet = st.tabs(["📝 TL;DR",
+                                                                     "🗨️ ASSIST",
+                                                                     "📬 EMAIL-AUTHORS",
+                                                                     "🔎 SIMILAR-ARTICLES",
+                                                                     "📣 TWEET"])
     with tab_tldr:
-        st.subheader("TL;DR")
-
-        try:    
-            st.write(summarize(metadata))
-
-            st.subheader("Keywords")
-            st.write(extract_keywords(metadata))
+        try:
+            st.subheader("TL;DR")
+            #st.write(enrich_abstract(metadata).replace("Response:", "", 1))
         except Exception as e:
-            st.error(f"Error summarizing paper: {e}")
+            st.error(f"enrich_abstract (ERROR): {e}")
 
-    with tab_contributions:
-        st.header("Contributions")
-        # contributions = cohere_engine.contributions_arxiv(query="1706.03762")
-        # st.write(contributions)
+        try:
+            st.subheader("Keywords")
+            #st.write(extract_keywords(metadata))
+        except Exception as e:
+            st.error(f"extract_keywords (ERROR): {e}")
 
     with tab_chat:
-        st.header("Chat")
-        st.write("This is a chat section")
+        query = st.text_input(label="Ask your Paper", placeholder='Ask your question here...',
+                              key="user_query_txt", label_visibility="hidden")
+        
+        if query:
+            data = query_llm(query)
+            st.success(f"🪄 {r}")
 
     with tab_email:
         try:
-            email = generate_email(metadata)
+            #email = generate_email(metadata)
 
-            st.subheader(email.subject)
-            st.write(email.body)
+            #st.subheader(email.subject)
+            #st.write(email.body)
+            st.write("Email")
         except Exception as e:
-            st.error(f"Error generating email: {e}")
+            st.error(f"generate_email (ERROR): {e}")
 
-
-    with tab_citations:
-        st.header("Citations")
-        st.write("This is a citations section")
-
-    with tab_smiliar:
-        st.header("Similar Papers")
-        st.write("This is a similar papers section")
+    with tab_related:
+        st.subheader("Related Papers (Title)")
+        data = search_documents("Embeddings")
+        st.write(data)
 
     with tab_tweet:
         st.subheader("Tweet")
-
         try:
-            tweet = generate_tweet(metadata)
-            st.write(tweet.text)
+            #tweet = generate_tweet(metadata)
+            #st.write(tweet.text)
+            st.write("Email")
         except Exception as e:
-            st.error(f"Error generating tweet: {e}")
+            st.error(f"generate_tweet (ERROR): {e}")
 
 
 if __name__ == "__main__":
