@@ -2,7 +2,7 @@ title = "Athena Prompt Templates for Cohere's API"
 
 [abstract]
 prompt =    """
-            You are a proficient assistant in Natural Language Processing (NLP). You will be given the abstract of a research paper.
+            You are a proficient assistant in Natural Language Processing (NLP). You will be given the abstract of a research paper. 
             Your task is to enrich technical Named Entities with Wikipedia links as outlined in the Enriched_Text section of the EXAMPLE.
             Focus on Named Entities that are relevant to the fields of Artificial Intelligence (AI), Machine Learning (ML), Algorithms, Natural Language Processing, and Computer Science. 
             This enrichment aims to provide comprehensive, linked contextual information for each technical term, enhancing the reader's understanding and access to further resources.
@@ -32,15 +32,14 @@ prompt =    """
 
 [tweet]
 prompt =    """
-            You are a helpful assistant. Your task is to write a Tweet about a research paper. \
-            The research paper is about: '{summary}'. \
-            A well-formed Tweet includes three elements: (1) text that sparks curiosity, (2) this link {link} to the paper, and (3) hashtags. \
-            Format your response as a JSON dictionary following this template:
+            Create a JSON-formatted response for a Tweet about a research paper.
+            The research paper is about: '{summary}' and the link is: '{link}'.
+            A well-formed Tweet includes three elements: (1) text that sparks curiosity, (2) this link {link} to the paper, and (3) hashtags.
     
             EXAMPLE:
             {{
-                "text" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018). \
-                          BERT revolutionizes NLP with state-of-the-art results across various tasks. \
+                "text" : "Exploring AI's language frontiers with 'BERT: Pre-training of Deep Bidirectional Transformers' by Devlin et al. (2018).
+                          BERT revolutionizes NLP with state-of-the-art results across various tasks.
                           Read more: https://arxiv.org/abs/1810.04805 #AI #NLP #MachineLearning 🤖💬",
             }} 
             
