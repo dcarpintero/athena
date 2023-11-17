@@ -84,7 +84,7 @@ class CohereEngine:
         Returns:
         - Tweet: Tweet object
         """
-        logging.info("generate_tweet ({link}) (started)")
+        logging.info(f"generate_tweet ({link}) (started)")
 
         model = Cohere(model='command', temperature=0.3, max_tokens=250)
         prompt = PromptTemplate.from_template(self.templates['tweet']['prompt'])
