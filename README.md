@@ -3,15 +3,15 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/dcarpintero/athena/badge)](https://www.codefactor.io/repository/github/dcarpintero/athena)
 [![License](https://img.shields.io/badge/Apache-2.0-green.svg)](https://github.com/dcarpintero/athena/blob/main/LICENSE)
 
-# 🦉 Athena - Research Copilot
+# 🦉 Athena - Research Companion
 <p align="center">
   <img src="./static/athena.png">
 </p>
 
 Athena is a RAG-Assist protoype powered by [Cohere-AI](https://cohere.com/) and [Embed-v3](https://txt.cohere.com/introducing-embed-v3/) to faciliate scientific Research and Discovery. Its key differentiating features include:
 - **Advanced Semantic Search**: Outperforms traditional keyword searches with state-of-the-art embeddings, offering a more nuanced and effective data retrieval experience that understands the complex nature of scientific queries.
-- **Human-AI Collaboration**: Enables faster review of research literature, highlights key findings, and augments human understanding by integrating (a demo subset of) the [Arxiv](https://arxiv.org/) and [Wikipedia](https://txt.cohere.com/embedding-archives-wikipedia/) corpus.
-- **Comprehensive Admin Support**: Provides assistance with tasks such as categorization of research papers, and e-mail drafting.
+- **Human-AI Collaboration**: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
+- **Comprehensive Admin Support**: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
 
 ## 📚 Demo
 
