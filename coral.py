@@ -1,37 +1,23 @@
-"""
-Coral is a Python library for generating structured responses using Pydantic, Langchain Expression Language, Cohere's LLM.
-"""
 import logging, os
-import cohere, tomli
+import cohere
+import tomli
 
 from dotenv import load_dotenv
-
 from langchain.document_loaders import ArxivLoader
 from langchain.llms import Cohere
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
-
-from pydantic import (
-    BaseModel,
-    Field,
-    field_validator,
-)
-
-from tenacity import (
-    retry, 
-    stop_after_attempt, 
-    wait_random_exponential
-)
+from pydantic import BaseModel, Field, field_validator
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
 class Tweet(BaseModel):
     """
     Pydantic Model to generate an structured Tweet with Validation
     """
-    text: str = Field(description="Tweet text")
+    text: str = Field(..., description="Tweet text")
 
     @field_validator('text')
-    @classmethod
     def validate_text(cls, v: str) -> str:
         if "https://" not in v and "http://" not in v:
             logging.error("Tweet does not include a link to the paper!")
@@ -43,14 +29,11 @@ class Email(BaseModel):
     """
     Pydantic Model to generate an structured Email
     """
-    subject: str = Field(description="Email subject")
-    body: str = Field(description="Email body")
+    subject: str = Field(..., description="Email subject")
+    body: str = Field(..., description="Email body")
 
 
 class CohereEngine:
-    """
-    """
-
     def __init__(self) -> None:
         logging.basicConfig(level=logging.DEBUG,
                             format="%(asctime)s [%(levelname)s] %(message)s")
@@ -76,6 +59,7 @@ class CohereEngine:
 
         logging.info("query_llm (OK)")
         return 
+
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def generate_tweet(self, summary: str, link: str) -> Tweet:
