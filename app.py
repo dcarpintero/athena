@@ -104,7 +104,7 @@ with st.sidebar.expander("📁 WEAVIATE-SETTINGS", expanded=True):
 
 with st.expander("ℹ️ ABOUT-THIS-APP", expanded=False):
     st.write("""
-             Athena is a RAG-Assist protoype powered by [Cohere](https://cohere.com/), [LangChain](https://www.langchain.com/) and [Weaviate](https://weaviate.io/) to faciliate scientific Research. It provides:
+             Athena is an AI-Assist protoype powered by [Cohere](https://cohere.com/), [LangChain](https://www.langchain.com/) and [Weaviate](https://weaviate.io/) to faciliate scientific Research. It provides:
              - *Advanced Semantic Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
              - *Human-AI Collaboration*: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
              - *Admin Support*: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
@@ -155,7 +155,7 @@ def main():
             st.info(
                 f"ℹ️ Composes a Glossary combining this [Prompt Template]({lnk_template}) w/ [LCEL]({lnk_lcel}).")
             try:
-                st.subheader("Glossary of Keywords")
+                st.subheader("Glossary")
                 st.write(extract_keywords(metadata))
             except Exception as e:
                 st.error(f"extract_keywords (ERROR): {e}")
@@ -163,8 +163,9 @@ def main():
     with tab_similar:
         lnk_embed = 'https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/data_pipeline/embed_arxiv.py#L23-L45'
         lnk_index = 'https://github.com/dcarpintero/athena/blob/5457229eba2c634b1bb3804aa342344b50ac278b/data_pipeline/index_arxiv.py#L12-L116'
+        lnk_ds = 'https://huggingface.co/datasets/dcarpintero/arXiv.cs.AI.CL.CV.LG.MA.NE.embedv3'
         st.info(
-            f"ℹ️ Lists the most similar Articles from a self-created [embeddings](lnk_embed) arXiv dataset of 50k entries in AI, ML and NLP [indexed with Weaviate]({lnk_index})")
+            f"ℹ️ Lists the most similar Articles from a self-created [embeddings]({lnk_embed}) [arXiv dataset]({lnk_ds}) of 50k entries in AI, ML and NLP [indexed with Weaviate]({lnk_index})")
         topic = f"{metadata['Title']}:{metadata['Summary']}"
         data = search_documents(topic=topic, max_results=max_results)
 
