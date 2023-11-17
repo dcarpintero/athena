@@ -3,7 +3,7 @@ import streamlit as st
 import weaviatestore as ws
 
 st.set_page_config(
-    page_title="Athena - Your Research Companion",
+    page_title="Athena - Research Companion",
     page_icon="🦉",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -33,8 +33,8 @@ def load_arxiv_paper(id: str):
     return metadata, content
 
 
-def search_documents(topic: str):
-    return weaviate_store.query_with_near_text(query=topic)
+def search_documents(topic: str, max_results=10):
+    return weaviate_store.query_with_near_text(query=topic, max_results=max_results)
 
 @st.cache_data()
 def summarize(metadata: dict):
@@ -51,7 +51,6 @@ def extract_keywords(metadata: dict):
     return cohere_engine.extract_keywords(text = metadata['Summary'])
 
 
-@st.cache_data()
 def generate_tweet(metadata: dict):
     return cohere_engine.generate_tweet(summary = metadata['Summary'], 
                                         link = metadata['entry_id'])
@@ -81,7 +80,7 @@ with st.sidebar.expander("📚 ARXIV", expanded=True):
 
 with st.sidebar.expander("🤖 COHERE-SETTINGS", expanded=True):
     gen_model = st.selectbox("Generation Model", ["command"], key="gen-model", index=0, help="Command is Cohere's default generation model (https://docs.cohere.com/docs/models)")
-    embed_model = st.selectbox("Embeddings Model", ["embedv3"], key="embed-model", index=0, help="Embed v3 is the latest and most advanced embeddings model (https://txt.cohere.com/introducing-embed-v3/)")
+    embed_model = st.selectbox("Embeddings Model", ["embed-english-v3.0"], key="embed-model", index=0, help="Embed-v3 is the latest and most advanced embeddings model (https://txt.cohere.com/introducing-embed-v3/)")
     rank_model = st.selectbox("Rank Model", ["rerank-multilingual-v2.0"], key="rank-model", index=0, help="Allows for re-ranking English language documents.")
     max_results = st.slider('Max Results', min_value=0, max_value=15, value=10, step=1)
     
@@ -111,56 +110,76 @@ metadata, content = load_arxiv_paper(arxiv_id)
 
 # -----------------------------------------------------------------------------
 def main():
-    st.info(f"📚 {metadata['Title']}  |  {metadata['Authors']}  |  📅 {metadata['Published']}  |  {metadata['entry_id']}")
+    st.success(f"📚 {metadata['Title']}  |  {metadata['Authors']}  |  📅 {metadata['Published']}  |  {metadata['entry_id']}")
 
     # Create tabs
-    tab_tldr, tab_chat, tab_email, tab_related, tab_tweet = st.tabs(["📝 TL;DR",
-                                                                     "🗨️ ASSIST",
-                                                                     "📬 EMAIL-AUTHORS",
-                                                                     "🔎 SIMILAR-ARTICLES",
-                                                                     "📣 TWEET"])
-    with tab_tldr:
-        try:
-            st.subheader("TL;DR")
-            #st.write(enrich_abstract(metadata).replace("Response:", "", 1))
-        except Exception as e:
-            st.error(f"enrich_abstract (ERROR): {e}")
+    tab_similar, tab_assist, tab_tldr, tab_email, tab_tweet = st.tabs(["🔎 SIMILAR-ARTICLES",
+                                                                       "🗨️ ASSIST",
+                                                                       "📝 TL;DR",
+                                                                       "📬 EMAIL-AUTHORS",
+                                                                       "📣 TWEET"])
+    
+    with tab_similar:
+        st.info(f"This demo works with a limited dataset of 50K arXiv articles in AI, ML and NLP")
+        topic = f"{metadata['Title']}:{metadata['Summary']}" 
+        max_results = 10
+        data = search_documents(topic=topic, max_results=max_results)
 
-        try:
-            st.subheader("Keywords")
-            #st.write(extract_keywords(metadata))
-        except Exception as e:
-            st.error(f"extract_keywords (ERROR): {e}")
-
-    with tab_chat:
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            for idx, doc in data.iterrows():
+                if idx % 2 == 0:
+                    arxiv_id = doc["url"].split('/')[-1].split('v')[0]
+                    with st.expander(f'**{doc["title"]}**', expanded=True):
+                        st.markdown(
+                            f'{doc["abstract"][:800]} [...] **[{arxiv_id}]** [PDF]({doc["url_pdf"]})')
+                        
+        with col2:
+            for idx, doc in data.iterrows():
+                if idx % 2 != 0:
+                    arxiv_id = doc["url"].split('/')[-1].split('v')[0]
+                    with st.expander(f'**{doc["title"]}**', expanded=True):
+                        st.markdown(
+                            f'{doc["abstract"][:800]} [...] **[{arxiv_id}]** [PDF]({doc["url_pdf"]})')
+                        
+    with tab_assist:
         query = st.text_input(label="Ask your Paper", placeholder='Ask your question here...',
                               key="user_query_txt", label_visibility="hidden")
         
         if query:
             data = query_llm(query)
-            st.success(f"🪄 {r}")
+            st.success(f"🪄 {data}")
+
+    with tab_tldr:
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            try:
+                st.subheader("Abstract enriched with Knowledge-Base")
+                st.write(enrich_abstract(metadata).replace("Response:", "", 1))
+            except Exception as e:
+                st.error(f"enrich_abstract (ERROR): {e}")
+        with col2:
+            try:
+                st.subheader("Glossary of Keywords")
+                st.write(extract_keywords(metadata))
+            except Exception as e:
+                st.error(f"extract_keywords (ERROR): {e}")
 
     with tab_email:
         try:
-            #email = generate_email(metadata)
+            email = generate_email(metadata)
 
-            #st.subheader(email.subject)
-            #st.write(email.body)
-            st.write("Email")
+            st.subheader(email.subject)
+            st.write(email.body)
         except Exception as e:
             st.error(f"generate_email (ERROR): {e}")
-
-    with tab_related:
-        st.subheader("Related Papers (Title)")
-        data = search_documents("Embeddings")
-        st.write(data)
 
     with tab_tweet:
         st.subheader("Tweet")
         try:
-            #tweet = generate_tweet(metadata)
-            #st.write(tweet.text)
-            st.write("Email")
+            tweet = generate_tweet(metadata)
+            st.write(tweet.text)
         except Exception as e:
             st.error(f"generate_tweet (ERROR): {e}")
 
