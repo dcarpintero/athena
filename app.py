@@ -32,7 +32,6 @@ def load_arxiv_paper(id: str):
     metadata, content = cohere_engine.load_arxiv_paper(id)
     return metadata, content
 
-
 def search_documents(topic: str, max_results=10):
     return weaviate_store.query_with_near_text(query=topic, max_results=max_results)
 
@@ -40,21 +39,17 @@ def search_documents(topic: str, max_results=10):
 def summarize(metadata: dict):
     return cohere_engine.summarize(text = metadata['Summary'])
 
-
 @st.cache_data
 def enrich_abstract(metadata: dict):
     return cohere_engine.enrich_abstract(text = metadata['Summary'])
-
 
 @st.cache_data()
 def extract_keywords(metadata: dict):
     return cohere_engine.extract_keywords(text = metadata['Summary'])
 
-
 def generate_tweet(metadata: dict):
     return cohere_engine.generate_tweet(summary = metadata['Summary'], 
                                         link = metadata['entry_id'])
-
 
 def generate_email(metadata: dict):
     return cohere_engine.generate_email(sender ="Athena", 
@@ -76,7 +71,7 @@ weaviate_store = load_weaviate_store()
 st.sidebar.title("🦉 Athena Research")
 
 with st.sidebar.expander("📚 ARXIV", expanded=True):
-    arxiv_id = st.text_input("Article ID", "1706.03762", help="Article Identifier in the cannonical form: YYMM.NNNNN")
+    arxiv_id = st.text_input("Article ID", "1810.04805", help="Article Identifier in the cannonical form: YYMM.NNNNN")
 
 with st.sidebar.expander("🤖 COHERE-SETTINGS", expanded=True):
     gen_model = st.selectbox("Generation Model", ["command"], key="gen-model", index=0, help="Command is Cohere's default generation model (https://docs.cohere.com/docs/models)")
@@ -113,12 +108,28 @@ def main():
     st.success(f"📚 {metadata['Title']}  |  {metadata['Authors']}  |  📅 {metadata['Published']}  |  {metadata['entry_id']}")
 
     # Create tabs
-    tab_similar, tab_assist, tab_tldr, tab_email, tab_tweet = st.tabs(["🔎 SIMILAR-ARTICLES",
+    tab_tldr, tab_similar, tab_assist, tab_email, tab_tweet = st.tabs(["📝 TL;DR",
+                                                                       "🔎 SIMILAR-ARTICLES",
                                                                        "🗨️ ASSIST",
-                                                                       "📝 TL;DR",
                                                                        "📬 EMAIL-AUTHORS",
                                                                        "📣 TWEET"])
-    
+
+    with tab_tldr:
+        col1, col2 = st.columns([1, 1])
+
+        with col1:
+            try:
+                st.subheader("Abstract w/ Wikipedia")
+                st.write(enrich_abstract(metadata).replace("Response:", "", 1))
+            except Exception as e:
+                st.error(f"enrich_abstract (ERROR): {e}")
+        with col2:
+            try:
+                st.subheader("Glossary of Keywords")
+                st.write(extract_keywords(metadata))
+            except Exception as e:
+                st.error(f"extract_keywords (ERROR): {e}")
+
     with tab_similar:
         st.info(f"This demo works with a limited dataset of 50K arXiv articles in AI, ML and NLP")
         topic = f"{metadata['Title']}:{metadata['Summary']}" 
@@ -149,22 +160,6 @@ def main():
         if query:
             data = query_llm(query)
             st.success(f"🪄 {data}")
-
-    with tab_tldr:
-        col1, col2 = st.columns([1, 1])
-
-        with col1:
-            try:
-                st.subheader("Abstract enriched with Knowledge-Base")
-                st.write(enrich_abstract(metadata).replace("Response:", "", 1))
-            except Exception as e:
-                st.error(f"enrich_abstract (ERROR): {e}")
-        with col2:
-            try:
-                st.subheader("Glossary of Keywords")
-                st.write(extract_keywords(metadata))
-            except Exception as e:
-                st.error(f"extract_keywords (ERROR): {e}")
 
     with tab_email:
         try:
