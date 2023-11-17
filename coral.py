@@ -33,6 +33,13 @@ class Email(BaseModel):
     body: str = Field(..., description="Email body")
 
 
+class AbstractWikipedia(BaseModel):
+    """
+    Pydantic Model to generate an structured Abstract with Wikipedia links
+    """
+    enriched_abstract: str = Field(..., description="Abstract enriched with Wikipedia links")
+
+
 class CohereEngine:
     def __init__(self) -> None:
         logging.basicConfig(level=logging.DEBUG,
@@ -131,7 +138,7 @@ class CohereEngine:
         """
         logging.info("enrich_abstract (started)")
 
-        model = Cohere(model='command', temperature=0.1, max_tokens=4096)
+        model = Cohere(model='command', temperature=0.3, max_tokens=4096, truncate=None)
         prompt = PromptTemplate.from_template(self.templates['abstract']['prompt'])
 
         abstract_chain = prompt | model
