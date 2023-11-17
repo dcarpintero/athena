@@ -3,10 +3,13 @@ import cohere
 import tomli
 
 from dotenv import load_dotenv
+from langchain.chat_models import ChatCohere
 from langchain.document_loaders import ArxivLoader
 from langchain.llms import Cohere
 from langchain.output_parsers import PydanticOutputParser
 from langchain.prompts import PromptTemplate
+from langchain.retrievers import CohereRagRetriever
+from langchain.schema.document import Document
 from pydantic import BaseModel, Field, field_validator
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
@@ -33,16 +36,9 @@ class Email(BaseModel):
     body: str = Field(..., description="Email body")
 
 
-class AbstractWikipedia(BaseModel):
-    """
-    Pydantic Model to generate an structured Abstract with Wikipedia links
-    """
-    enriched_abstract: str = Field(..., description="Abstract enriched with Wikipedia links")
-
-
 class CohereEngine:
     def __init__(self) -> None:
-        logging.basicConfig(level=logging.DEBUG,
+        logging.basicConfig(level=logging.INFO,
                             format="%(asctime)s [%(levelname)s] %(message)s")
         self.vars = self.__load_environment_vars()
         self.cohere = self.__cohere_client(self.vars["COHERE_API_KEY"])
@@ -52,20 +48,27 @@ class CohereEngine:
 
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
-    def query_llm(self, query: str) -> str:
+    def query_article(self, article: str, query: str):
         """
-        Query LLM with a custom prompt.
+        Query Article.
 
         Parameters:
-        - query (str): Query to be sent to LLM
+        - article (str): Article to query
+        - query (str): Query to search for
 
         Returns:
-        - str: Response from LLM
+        - str: Relevant passages from the article
         """
         logging.info("query_llm (started)")
+        
+        rag = CohereRagRetriever(llm=ChatCohere())
+        docs = rag.get_relevant_documents(query, 
+                                          source_documents=[Document(page_content=article)])
+
+        #ranked_docs = self.cohere.rerank(query=query, documents=docs, top_n=4, model="rerank-english-v2.0")
 
         logging.info("query_llm (OK)")
-        return 
+        return docs
 
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
@@ -81,8 +84,7 @@ class CohereEngine:
         Returns:
         - Tweet: Tweet object
         """
-        logging.info("generate_tweet (started)")
-        logging.info(f"paper: {link}")
+        logging.info("generate_tweet ({link}) (started)")
 
         model = Cohere(model='command', temperature=0.3, max_tokens=250)
         prompt = PromptTemplate.from_template(self.templates['tweet']['prompt'])

@@ -58,8 +58,8 @@ def generate_email(metadata: dict):
                                         title = metadata['Title'], 
                                         topic = "Machine Learning")
 
-def query_llm(query: str):
-    return "A random response"
+def query_article(article: str, query: str):
+    return cohere_engine.query_llm(article = article, query = query)
 
 cohere_engine = load_cohere_engine()
 weaviate_store = load_weaviate_store()
@@ -86,7 +86,7 @@ with st.sidebar.expander("📁 WEAVIATE-SETTINGS", expanded=True):
 with st.expander("ℹ️ ABOUT-THIS-APP", expanded=False):
     st.write("""
              Athena is a RAG-Assist protoype powered by [Cohere](https://cohere.com/), [LangChain](https://www.langchain.com/) and [Weaviate](https://weaviate.io/) to faciliate scientific Research. It provides:
-             - *Semantic Similarity Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
+             - *Advanced Semantic Search*: Outperforms traditional keyword searches with [Cohere Embed-v3](https://txt.cohere.com/introducing-embed-v3/) and [Cohere Rerank](https://cohere.com/rerank).
              - *Human-AI Collaboration*: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
              - *Admin Support*: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
              """)
@@ -108,24 +108,23 @@ def main():
     st.success(f"📚 {metadata['Title']}  |  {metadata['Authors']}  |  📅 {metadata['Published']}  |  {metadata['entry_id']}")
 
     # Create tabs
-    tab_tldr, tab_similar, tab_assist, tab_email, tab_tweet = st.tabs(["📝 TL;DR",
+    tab_tldr, tab_similar, tab_finder, tab_email, tab_tweet = st.tabs(["📝 TL;DR",
                                                                        "🔎 SIMILAR-ARTICLES",
-                                                                       "🗨️ ASSIST",
+                                                                       "🗨️ FINDER",
                                                                        "📬 EMAIL-AUTHORS",
                                                                        "📣 TWEET"])
 
     with tab_tldr:
+        st.info(f"ℹ️ Enriches Abstract w/ Wikipedia links combining [Prompt Templates](https://python.langchain.com/docs/modules/model_io/prompts/prompt_templates/) and [LangChain Expression Language](https://python.langchain.com/docs/expression_language/).")
         col1, col2 = st.columns([1, 1])
 
         with col1:
-            st.info(f"ℹ️ This combines Prompt Templates w/ [LangChain Expression Language](https://python.langchain.com/docs/expression_language/).")
             try:
                 st.subheader("Abstract w/ Wikipedia")
                 st.write(enrich_abstract(metadata).replace("Response:", "", 1))
             except Exception as e:
                 st.error(f"enrich_abstract (ERROR): {e}")
         with col2:
-            st.info(f"ℹ️ This combines Prompt Templates w/ [LangChain Expression Language](https://python.langchain.com/docs/expression_language/).")
             try:
                 st.subheader("Glossary of Keywords")
                 st.write(extract_keywords(metadata))
@@ -135,8 +134,7 @@ def main():
     with tab_similar:
         st.info(f"ℹ️ These are the most similar Articles from a self-created arXiv dataset of 50k entries in AI, ML and NLP [Powered by Cohere's Embed-v3 and Weaviate]")
         topic = f"{metadata['Title']}:{metadata['Summary']}" 
-        max_results = 10
-        data = search_documents(topic=topic, max_results=max_results)
+        data = search_documents(topic=topic)
 
         col1, col2 = st.columns([1, 1])
         with col1:
@@ -155,19 +153,36 @@ def main():
                         st.markdown(
                             f'{doc["abstract"][:800]} [...] **[{arxiv_id}]** [PDF]({doc["url_pdf"]})')
                         
-    with tab_assist:
-        query = st.text_input(label="Ask your Paper", placeholder='Ask your question here...',
+    with tab_finder:
+        st.info(f"ℹ️ Find articles in your research topic from a self-created arXiv dataset of 50k entries in AI, ML and NLP [Powered by Cohere's Embed-v3 and Weaviate]")
+        query = st.text_input(label="Ask any Paper", placeholder='fine-tuning pre-trained language models',
                               key="user_query_txt", label_visibility="hidden")
         
         if query:
-            data = query_llm(query)
-            st.success(f"🪄 {data}")
+            data = search_documents(topic=query, max_results=8)
+            
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                for idx, doc in data.iterrows():
+                    if idx % 2 == 0:
+                        arxiv_id = doc["url"].split('/')[-1].split('v')[0]
+                        with st.expander(f'**{doc["title"]}**', expanded=True):
+                            st.markdown(
+                                f'{doc["abstract"][:800]} [...] **[{arxiv_id}]** [PDF]({doc["url_pdf"]})')
+                            
+            with col2:
+                for idx, doc in data.iterrows():
+                    if idx % 2 != 0:
+                        arxiv_id = doc["url"].split('/')[-1].split('v')[0]
+                        with st.expander(f'**{doc["title"]}**', expanded=True):
+                            st.markdown(
+                                f'{doc["abstract"][:800]} [...] **[{arxiv_id}]** [PDF]({doc["url_pdf"]})')
 
     with tab_email:
         st.info(f"ℹ️ This Task uses [LangChain](https://www.langchain.com/) and [Pydantic](https://docs.pydantic.dev/latest/) to format the generated e-mail in JSON format.")
         try:
             email = generate_email(metadata)
-
+        
             st.subheader(email.subject)
             st.write(email.body)
         except Exception as e:
