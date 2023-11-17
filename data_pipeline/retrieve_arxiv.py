@@ -7,35 +7,27 @@ import random
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
 
-CATEGORY = "cs.CL"
+CATEGORY = ["cs.AI", "cs.CL", "cs.CV", "cs.LG", "cs.MA", "cs.NE"] # AI, NLP, COMPUTER_VISION...
 BASE_URL = "https://export.arxiv.org/api/query?"
 MAX_RESULTS_PER_BATCH = 200
 TOTAL_RESULTS_TO_RETRIEVE = 50000
 NS = {'atom': 'http://www.w3.org/2005/Atom'}
-JSON_FILE = "data/arxiv_papers.json"
+JSON_FILE = "data/arxiv_cs.json"
 
 
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.DEBUG,
                     format="%(asctime)s [%(levelname)s] %(message)s")
-
-def config_query_params(start, max_results):
-    return {
-        "search_query": f"cat:{CATEGORY}",
-        "sortBy": "submittedDate",
-        "sortOrder": "descending",
-        "start": start,
-        "max_results": max_results,
-    }
 
 @retry(wait=wait_random_exponential(min=5, max=15), stop=stop_after_attempt(3))
 def retrieve_batch_metadata(start, max_results):
     """
     Retrieve a batch of papers metadata from arXiv API.
     """
-    params = config_query_params(start, max_results)
-    response = requests.get(BASE_URL, params=params)
-    response.raise_for_status()
-
+    search_query = '+'.join(CATEGORY)
+    
+    query_url = f"{BASE_URL}search_query=cat:{search_query}&sortyBy=submittedDate&sortOrder=descending&start={start}&max_results={max_results}"
+    response = requests.get(query_url)
+    
     return response.text
 
 def parse_xml(xml_data):
