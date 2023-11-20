@@ -1,4 +1,4 @@
-[![Open_inStreamlit](https://img.shields.io/badge/Open%20In-Streamlit-red?logo=Streamlit)](https://wikisearch.streamlit.app/)
+[![Open_inStreamlit](https://img.shields.io/badge/Open%20In-Streamlit-red?logo=Streamlit)](https://athena-research.streamlit.app/)
 [![Python](https://img.shields.io/badge/python-%203.8-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/Apache-2.0-green.svg)](https://github.com/dcarpintero/athena/blob/main/LICENSE)
 
