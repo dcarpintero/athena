@@ -1,9 +1,11 @@
-import logging, os
+import logging
+import os
 import pandas as pd
 import weaviate
 
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_random_exponential
+
 
 class WeaviateStore:
 
@@ -12,11 +14,10 @@ class WeaviateStore:
                             format="%(asctime)s [%(levelname)s] %(message)s")
         self.vars = self.__load_environment_vars()
         self.weaviate = self.__weaviate_client(self.vars["COHERE_API_KEY"],
-                                               self.vars["WEAVIATE_URL"], 
+                                               self.vars["WEAVIATE_URL"],
                                                self.vars["WEAVIATE_API_KEY"])
 
         logging.info("Initialized WeaviateEngine")
-
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def query_with_near_text(self, query, max_results=10) -> pd.DataFrame:
@@ -24,9 +25,10 @@ class WeaviateStore:
         Search Arxiv Documents in Weaviate with Near Text.
         Weaviate converts the input query into a vector through the inference API (Cohere) and uses that vector as the basis for a vector search.
         """
+
         response = (
             self.weaviate.query
-            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
+            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "update_date", "publication_date"])
             .with_near_text({"concepts": [query]})
             .with_limit(max_results)
             .do()
@@ -35,6 +37,23 @@ class WeaviateStore:
         data = response["data"]["Get"]["ArxivDocument_CS_CL"]
         return pd.DataFrame.from_dict(data, orient='columns')
 
+    @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
+    def query_with_near_vector(self, query_vector, max_results=10) -> pd.DataFrame:
+        """
+        Search Arxiv Documents in Weaviate with Near Vector.
+        Weaviate uses that vector query as the basis for the search.
+        """
+
+        response = (
+            self.weaviate.query
+            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "update_date", "publication_date"])
+            .with_near_vector({"vector": query_vector})
+            .with_limit(max_results)
+            .do()
+        )
+
+        data = response["data"]["Get"]["ArxivDocument_CS_CL"]
+        return pd.DataFrame.from_dict(data, orient='columns')
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def query_with_bm25(self, query, max_results=10) -> pd.DataFrame:
@@ -46,7 +65,7 @@ class WeaviateStore:
 
         response = (
             self.weaviate.query
-            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
+            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "update_date", "publication_date"])
             .with_bm25(query=query)
             .with_limit(max_results)
             .with_additional("score")
@@ -55,7 +74,6 @@ class WeaviateStore:
 
         data = response["data"]["Get"]["ArxivDocument_CS_CL"]
         return pd.DataFrame.from_dict(data, orient='columns')
-
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def query_with_hybrid(self, query, max_results=10) -> pd.DataFrame:
@@ -67,7 +85,7 @@ class WeaviateStore:
 
         response = (
             self.weaviate.query
-            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "updated", "published"])
+            .get("ArxivDocument_CS_CL", ["url", "url_pdf", "title", "authors", "categories", "abstract", "update_date", "publication_date"])
             .with_hybrid(query=query)
             .with_limit(max_results)
             .with_additional(["score"])
@@ -76,7 +94,6 @@ class WeaviateStore:
 
         data = response["data"]["Get"]["ArxivDocument_CS_CL"]
         return pd.DataFrame.from_dict(data, orient='columns')
-
 
     def __load_environment_vars(self):
         """
@@ -90,10 +107,9 @@ class WeaviateStore:
         for var, value in env_vars.items():
             if not value:
                 raise EnvironmentError(f"{var} environment variable not set.")
-        
+
         logging.info("load_environment_vars (OK)")
         return env_vars
-    
 
     @retry(wait=wait_random_exponential(min=1, max=5), stop=stop_after_attempt(3))
     def __weaviate_client(self, cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
