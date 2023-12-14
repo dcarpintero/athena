@@ -7,10 +7,10 @@
   <img src="./static/athena-dalle.png">
 </p>
 
-Athena is an AI-Assist protoype powered by [Cohere-AI](https://cohere.com/) and [Embed-v3](https://txt.cohere.com/introducing-embed-v3/) to faciliate scientific Research and Discovery. Its key differentiating features include:
+Athena is an AI-Assist protoype powered by [Cohere-AI](https://cohere.com/) and [Embed-v3](https://txt.cohere.com/introducing-embed-v3/) to faciliate scientific Research. Its key differentiating features include:
 - **Advanced Semantic Search**: Outperforms traditional keyword searches with state-of-the-art embeddings, offering a more nuanced and effective data retrieval experience that understands the complex nature of scientific queries.
 - **Human-AI Collaboration**: Enables easier review of research literature, highlighting key topics, and augmenting human understanding.
-- **Comprehensive Admin Support**: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
+- **Admin Support**: Provides assistance with tasks such as categorization of research articles, e-mail drafting, and tweets generation.
 
 ## 📚 Overview
 
