@@ -5,14 +5,14 @@ import os
 
 from dotenv import load_dotenv
 
-ARXIV_JSON = "data/arxiv_cs.CL.json"
+ARXIV_JSON = "data/arXiv.cs.CL.embedv3.jsonl"  # "data/arxiv.cs.CL.json"
 SCHEMA_NAME = "ArxivDocument_CS_CL"
 
 
 def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
     """Index Data into Weaviate"""
     logging.info(f"Loading data from '{ARXIV_JSON}'")
-    df = pd.read_json(ARXIV_JSON)
+    df = pd.read_json(ARXIV_JSON, lines=True)
 
     logging.info(f"Initializing Weaviate Client: '{weaviate_url}'")
     client = weaviate.Client(
@@ -20,7 +20,8 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
         auth_client_secret=weaviate.AuthApiKey(api_key=weaviate_api_key),
         additional_headers={"X-Cohere-Api-Key": cohere_api_key})
 
-    logging.info(f"Deleting '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
+    logging.info(
+        f"Deleting '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
     client.schema.delete_class(SCHEMA_NAME)
 
     """
@@ -31,15 +32,16 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
     See: https://weaviate.io/developers/weaviate/config-refs/schema#vectorizer 
     """
 
-    logging.info(f"Creating '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
-    
+    logging.info(
+        f"Creating '{SCHEMA_NAME}' schema in Weaviate: '{weaviate_url}'")
+
     class_obj = {
         "class": SCHEMA_NAME,
         "description": "This class contains Arxiv Documents in the CS.CL category",
         "vectorIndexType": "hnsw",
         "vectorizer": "text2vec-cohere",
         "vectorIndexConfig": {
-            "distance": "cosine" # Set to "cosine" for English models; "dot" for multilingual models
+            "distance": "cosine"  # Set to "cosine" for English models; "dot" for multilingual models
         },
         "moduleConfig": {
             "text2vec-cohere": {
@@ -56,7 +58,7 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
                 "indexSearchable": False,
                 "vectorizePropertyName": False
             },
-                        {
+            {
                 "name": "url_pdf",
                 "dataType": ["text"],
                 "indexFilterable": False,
@@ -80,11 +82,11 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
                 "dataType": ["text"]
             },
             {
-                "name": "updated",
+                "name": "update_date",
                 "dataType": ["date"],
             },
             {
-                "name": "published",
+                "name": "publication_date",
                 "dataType": ["date"],
             },
         ]
@@ -104,13 +106,19 @@ def index_data(cohere_api_key: str, weaviate_url: str, weaviate_api_key: str):
                     "authors": item.authors,
                     "categories": item.categories,
                     "abstract": item.summary,
-                    "updated": item.updated,
-                    "published": item.published,
+                    "update_date": item.updated,
+                    "publication_date": item.published,
                 }
 
-                batch.add_data_object(
-                    data_object=properties,
-                    class_name=SCHEMA_NAME)
+                if (item.embeddings):
+                    batch.add_data_object(
+                        data_object=properties,
+                        class_name=SCHEMA_NAME,
+                        vector=item.embeddings["summary"])
+                else:
+                    batch.add_data_object(
+                        data_object=properties,
+                        class_name=SCHEMA_NAME)
     except Exception as ex:
         logging.error(f"Unexpected Error: {ex}")
         raise
@@ -152,6 +160,7 @@ def main():
     except Exception as ex:
         logging.error(f"Unexpected Error: {ex}")
         raise
+
 
 if __name__ == "__main__":
     main()
